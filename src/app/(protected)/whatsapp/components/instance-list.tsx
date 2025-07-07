@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
   AlertCircle,
-  Bot,
   Loader2,
   LogOut,
   MessageCircle,
@@ -382,13 +381,13 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                         </div>
                       )}
 
-                      <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                      {/* <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
                         <Bot className="h-4 w-4 text-primary" />
                         <div>
                           <p className="text-xs text-muted-foreground">Agentes AI</p>
                           <p className="text-sm font-semibold">0</p>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
 
                     {/* Botões de ação */}
@@ -423,9 +422,9 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                             <Settings className="h-4 w-4" />
                           </ActionButton>
 
-                          <ActionButton title="Agentes AI" variant="secondary">
+                          {/* <ActionButton title="Agentes AI" variant="secondary">
                             <Bot className="h-4 w-4" />
-                          </ActionButton>
+                          </ActionButton> */}
                         </>
                       )}
 

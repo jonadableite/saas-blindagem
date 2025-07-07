@@ -44,6 +44,9 @@
   --deep: oklch(0.1591 0 0); /* #0D0D0D */
   --purple: oklch(14.1% 0.043 285.823); /* #1e1b4a */
 
+  /* Cores Neon para o painel de métricas */
+  --neon-green: oklch(0.7 0.2 140);   /* Um verde vibrante */
+
   /* Variáveis específicas para scrollbar */
   --scrollbar-bg: oklch(0.95 0.002 286.32);
   --scrollbar-thumb: oklch(0.8 0.01 286.32);
@@ -91,6 +94,9 @@
   --purple: oklch(
     14.1% 0.043 285.823
   ); /* #1e1b4a
+
+  /* Cores Neon para o painel de métricas no modo escuro */
+  --neon-green: oklch(0.8 0.25 140); /* Verde um pouco mais claro para contraste */
 
 
   /* Variáveis específicas para scrollbar no modo escuro */
@@ -144,6 +150,10 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  .text-neon-green {
+    color: var(--neon-green);
   }
 }
 

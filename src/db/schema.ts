@@ -61,7 +61,7 @@ export const usersTables = pgTable("users_tables", {
   isActive: boolean("is_active").default(true).notNull(),
 
   // limite de instâncias
-  instanceLimits: integer("instance_limits").default(1).notNull(),
+  instanceLimits: integer("instance_limits").default(2).notNull(),
   instanceTotal: integer("instance_total").default(0).notNull(),
 
   // Configurações avançadas
