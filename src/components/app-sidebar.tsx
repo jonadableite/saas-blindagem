@@ -1,4 +1,5 @@
-"use client"
+// src/components/app-sidebar.tsx
+"use client";
 
 import {
   AudioWaveform,
@@ -11,20 +12,20 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
-} from "lucide-react"
-import * as React from "react"
+} from "lucide-react";
+import * as React from "react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { NavMain } from "@/components/nav-main";
+import { NavProjects } from "@/components/nav-projects";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 // This is sample data.
 const data = {
@@ -36,17 +37,17 @@ const data = {
   teams: [
     {
       name: "Acme Inc",
-      logo: GalleryVerticalEnd,
+      logo: GalleryVerticalEnd, // Este é um componente React
       plan: "Enterprise",
     },
     {
       name: "Acme Corp.",
-      logo: AudioWaveform,
+      logo: AudioWaveform, // Este é um componente React
       plan: "Startup",
     },
     {
       name: "Evil Corp.",
-      logo: Command,
+      logo: Command, // Este é um componente React
       plan: "Free",
     },
   ],
@@ -132,7 +133,7 @@ const data = {
         },
         {
           title: "Limits",
-          url: "#",
+          url: "#", // Add the missing url property here
         },
       ],
     },
@@ -154,7 +155,7 @@ const data = {
       icon: Map,
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -167,9 +168,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser
+          user={{
+            name: data.user.name,
+            email: data.user.email,
+            plan: "FREE",
+            dailyMessageLimit: null,
+            monthlyMessageLimit: null,
+            avatar: data.user.avatar,
+          }}
+        />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

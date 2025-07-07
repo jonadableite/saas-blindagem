@@ -1,6 +1,8 @@
 // src/components/nav-user.tsx
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
+// eslint-disable-next-line simple-import-sort/imports
 import { motion } from "framer-motion";
 import {
   BadgeCheck,

@@ -17,6 +17,7 @@ import {
   Wifi,
   WifiOff
 } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -529,9 +530,11 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                   ) : currentQrCodeData?.base64 ? (
                     <div className="text-center space-y-4">
                       <div className="mx-auto w-fit p-4 bg-white rounded-lg shadow-sm">
-                        <img
+                        <Image
                           src={currentQrCodeData.base64}
                           alt="QR Code"
+                          width={256}
+                          height={256}
                           className="w-64 h-64 object-contain"
                         />
 

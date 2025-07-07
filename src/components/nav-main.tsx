@@ -41,12 +41,12 @@ const submenuVariants = {
   collapsed: {
     height: 0,
     opacity: 0,
-    transition: { duration: 0.2, ease: "easeInOut" },
+    transition: { duration: 0.2, ease: [0.42, 0, 0.58, 1] as const }, // Adicionado 'as const' aqui
   },
   open: {
     height: "auto",
     opacity: 1,
-    transition: { duration: 0.3, ease: "easeInOut" },
+    transition: { duration: 0.3, ease: [0.42, 0, 0.58, 1] as const }, // Adicionado 'as const' aqui
   },
 };
 
@@ -134,7 +134,12 @@ export function NavMain({ items }: NavMainProps) {
                       isActive={isActive}
                       asChild
                     >
-                      <motion.div {...motionDivProps}>
+                      <motion.div
+                        className={motionDivProps.className}
+                        whileHover={motionDivProps.whileHover}
+                        whileTap={motionDivProps.whileTap}
+                        transition={{ duration: 0.15, ease: "easeInOut" }}
+                      >
                         {commonButtonContent}
                       </motion.div>
                     </SidebarMenuButton>
@@ -205,7 +210,15 @@ export function NavMain({ items }: NavMainProps) {
                     isActive={isActive}
                     asChild
                   >
-                    <motion.div {...motionDivProps}>
+                    <motion.div
+                      className={motionDivProps.className}
+                      whileHover={motionDivProps.whileHover}
+                      whileTap={motionDivProps.whileTap}
+                      transition={{
+                        duration: motionDivProps.transition.duration,
+                        ease: motionDivProps.transition.ease as any,
+                      }}
+                    >
                       {commonButtonContent}
                     </motion.div>
                   </SidebarMenuButton>

@@ -4,16 +4,15 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
 
-import { useSidebar } from "@/components/ui/sidebar"; // Certifique-se de que este caminho está correto
+import { useSidebar } from "@/components/ui/sidebar";
 
 export function MainContentWrapper({ children }: { children: ReactNode }) {
-  const { isCollapsed } = useSidebar();
+  const sidebarContext = useSidebar();
+  const isCollapsed = sidebarContext?.state === "collapsed";
   const sidebarWidth = 256;
 
   return (
     <motion.main
-      // A margem esquerda é 0 quando a sidebar está colapsada (escondida)
-      // e é igual à largura da sidebar quando ela está visível.
       initial={{ marginLeft: sidebarWidth }}
       animate={{ marginLeft: isCollapsed ? 0 : sidebarWidth }}
       transition={{ duration: 0.3, ease: "easeInOut" }}

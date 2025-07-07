@@ -1,12 +1,7 @@
 // src/app/(protected)/_components/app-sidebar.tsx
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Crown,
-  LayoutDashboard,
-  Sparkles,
-  Users
-} from "lucide-react";
+import { Crown, LayoutDashboard, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -62,7 +57,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Verifica se o usuário logado possui a role de 'admin'
   const userRoles = session.data?.user?.role || "";
-  const isSuperAdmin = userRoles.split(",").includes("superadmin",);
+  const isSuperAdmin = userRoles.split(",").includes("superadmin");
 
   const navMain = [
     {
@@ -80,58 +75,58 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/whatsapp",
         },
         // {
-        //   title: "Contatos",
-        //   url: "/whatsapp/contacts",
+        // title: "Contatos",
+        // url: "/whatsapp/contacts",
         // },
       ],
     },
     // {
-    //   title: "Campanhas",
-    //   url: "/campaigns",
-    //   icon: MessageSquareText,
-    //   items: [
-    //     {
-    //       title: "Todas as Campanhas",
-    //       url: "/campaigns",
-    //     },
-    //     {
-    //       title: "Agendadas",
-    //       url: "/campaigns/scheduled",
-    //     },
-    //     {
-    //       title: "Templates",
-    //       url: "/campaigns/templates",
-    //     },
-    //   ],
+    // title: "Campanhas",
+    // url: "/campaigns",
+    // icon: MessageSquareText,
+    // items: [
+    // {
+    // title: "Todas as Campanhas",
+    // url: "/campaigns",
     // },
     // {
-    //   title: "Agentes IA",
-    //   url: "/agents",
-    //   icon: Bot,
-    //   items: [
-    //     {
-    //       title: "Meus Agentes",
-    //       url: "/agents",
-    //     },
-    //     {
-    //       title: "Criar Agente",
-    //       url: "/agents/create",
-    //     },
-    //     {
-    //       title: "chat",
-    //       url: "/agents/chat",
-    //     },
-    //   ],
+    // title: "Agendadas",
+    // url: "/campaigns/scheduled",
+    // },
+    // {
+    // title: "Templates",
+    // url: "/campaigns/templates",
+    // },
+    // ],
+    // },
+    // {
+    // title: "Agentes IA",
+    // url: "/agents",
+    // icon: Bot,
+    // items: [
+    // {
+    // title: "Meus Agentes",
+    // url: "/agents",
+    // },
+    // {
+    // title: "Criar Agente",
+    // url: "/agents/create",
+    // },
+    // {
+    // title: "chat",
+    // url: "/agents/chat",
+    // },
+    // ],
     // },
   ];
 
   // REMOVIDO: A lógica para adicionar o item "Admin" ao navMain foi movida para o JSX.
   // if (isSuperAdmin) {
-  //   navMain.push({
-  //     title: "Admin",
-  //     url: "/admin",
-  //     icon: Users,
-  //   });
+  // navMain.push({
+  // title: "Admin",
+  // url: "/admin",
+  // icon: Users,
+  // });
   // }
 
   const userData = {
@@ -139,10 +134,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     email: session.data?.user?.email || "",
     avatar: session.data?.user?.image || "",
     plan: session.data?.user?.plan || "",
-    dailyMessageLimit: session.data?.user?.dailyMessageLimit,
-    monthlyMessageLimit: session.data?.user?.monthlyMessageLimit,
-    credits: session.data?.user?.credits ?? 0,
+    dailyMessageLimit: session.data?.user?.dailyMessageLimit, // Adicione esta linha
+    monthlyMessageLimit: session.data?.user?.monthlyMessageLimit, // Adicione esta linha
   };
+  if (!userData.name) {
+    userData.name = session.data?.user?.email || "Usuário sem nome";
+  }
 
   return (
     <Sidebar collapsible="icon" className="w-[260px]" {...props}>
@@ -261,21 +258,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.2 }}
-                  className="flex items-center justify-center p-4"
                 >
-                  <motion.div
-                    className="relative"
-                    initial={{ rotate: 0 }}
-                    animate={{ rotate: [0, 5, -5, 0] }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <Crown className="drop-shadow-glow h-6 w-6 text-yellow-300" />
-                  </motion.div>
+                  <div className="flex items-center justify-center p-3">
+                    <Crown className="h-6 w-6 text-yellow-400" />
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div
@@ -284,86 +270,53 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
-                  className="flex items-center gap-4 p-4"
+                  className="flex items-center gap-3 p-3"
                 >
-                  <motion.div
-                    className="relative"
-                    initial={{ rotate: 0 }}
-                    animate={{ rotate: [0, 5, -5, 0] }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    }}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <Crown className="drop-shadow-glow h-5 w-5 text-yellow-300" />
-                  </motion.div>
-                  <div className="flex-1">
-                    <p className="font-bold whitespace-nowrap text-white">
-                      Upgrade de plano
-                    </p>
-                    <p className="text-xs whitespace-nowrap text-white/90">
-                      Desbloqueie os recursos
-                    </p>
-                  </div>
-                  <motion.div
-                    initial={{ scale: 1, opacity: 0.8 }}
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: 0.5,
-                    }}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-300" />
-                  </motion.div>
+                  <Crown className="h-6 w-6 text-yellow-400" />
+                  <span className="flex-grow text-sm font-semibold text-white">
+                    Upgrade de Plano
+                  </span>
+                  <Sparkles className="h-4 w-4 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 </motion.div>
               )}
             </AnimatePresence>
           </Link>
-
-          {/* Botão para Super Admin, visível apenas para superadministradores */}
           {isSuperAdmin && (
             <Link
-              href="/superadmin" // Defina o URL correto para a página de superadministrador
+              href="/admin"
               className={cn(
-                "flex items-center w-full rounded-md p-2 text-foreground transition-colors duration-200 hover:bg-accent",
-                "mt-2", // Adiciona margem superior para espaçar do botão de plano
-                isCollapsed ? "justify-center" : "gap-4"
+                "relative block w-full overflow-hidden rounded-lg bg-gradient-to-r from-blue-700 to-blue-900",
+                "group transition-all duration-300 hover:shadow-lg",
+                "mt-2",
               )}
             >
               <AnimatePresence mode="wait">
                 {isCollapsed ? (
                   <motion.div
-                    key="superadmin-collapsed"
+                    key="admin-collapsed"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Users className="h-6 w-6 text-indigo-300" /> {/* Ícone para Super Admin */}
+                    <div className="flex items-center justify-center p-3">
+                      <Users className="h-6 w-6 text-white" />
+                    </div>
                   </motion.div>
                 ) : (
                   <motion.div
-                    key="superadmin-expanded"
+                    key="admin-expanded"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-center gap-4"
+                    className="flex items-center gap-3 p-3"
                   >
-                    <Users className="h-5 w-5 text-indigo-300" /> {/* Ícone para Super Admin */}
-                    <div className="flex-1">
-                      <p className="font-bold whitespace-nowrap">
-                        Super Admin
-                      </p>
-                      <p className="text-xs whitespace-nowrap text-foreground/90">
-                        Gerenciar usuários e sistema
-                      </p>
-                    </div>
+                    <Users className="h-6 w-6 text-white" />
+                    <span className="flex-grow text-sm font-semibold text-white">
+                      Área do Admin
+                    </span>
+                    <Sparkles className="h-4 w-4 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </motion.div>
                 )}
               </AnimatePresence>

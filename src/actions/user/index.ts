@@ -3,6 +3,7 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { ZodError } from "zod";
 
 import { db } from "@/db";
 import { User, usersTables } from "@/db/schema";
@@ -23,21 +24,20 @@ export async function updateAccountSettings(
     const image = formData.get("image") as string;
     const timezone = formData.get("timezone") as string;
 
-    const currentUser = await auth.api.getSession();
+    const currentUser = await auth.api.getSession({ headers: new Headers() });
     if (!currentUser) {
       return { message: "Usuário não autenticado.", success: false };
     }
 
     const updateFields: Partial<User> = {};
 
-    // Verifica e adiciona campos para atualização apenas se houver mudança
-    if (name !== undefined && name !== currentUser.name) {
+    if (name !== undefined && name !== currentUser.user.name) {
       updateFields.name = name;
     }
-    if (image !== undefined && image !== currentUser.image) {
+    if (image !== undefined && image !== currentUser.user.image) {
       updateFields.image = image;
     }
-    if (timezone !== undefined && timezone !== currentUser.timezone) {
+    if (timezone !== undefined && timezone !== currentUser.user.timezone) {
       updateFields.timezone = timezone;
     }
 
@@ -45,36 +45,33 @@ export async function updateAccountSettings(
       return { message: "Nenhuma alteração para salvar.", success: true };
     }
 
-    // Realiza a atualização no banco de dados usando Drizzle ORM
     await db
       .update(usersTables)
       .set({
         ...updateFields,
-        updatedAt: new Date(), // Atualiza o timestamp de `updatedAt`
+        updatedAt: new Date(),
       })
-      .where(eq(usersTables.id, currentUser.id));
+      .where(eq(usersTables.id, currentUser.user.id));
 
-    // Revalida o cache da página para mostrar os dados atualizados imediatamente
     revalidatePath("/conta");
 
     return { message: "Configurações atualizadas com sucesso!", success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Falha ao atualizar configurações da conta:", error);
+    let errorMessage = "Erro desconhecido.";
+    let validationErrors: string | undefined;
+
+    if (error instanceof ZodError) {
+      errorMessage = "Falha na validação dos dados.";
+      validationErrors = error.errors.map(err => err.message).join(", ");
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return {
-      message: "Falha ao atualizar configurações: " + error.message,
+      message: `Falha ao atualizar configurações: ${errorMessage}`,
       success: false,
-      errors: error.errors,
+      errors: validationErrors,
     };
   }
 }
-
-// Nota sobre alteração de email:
-// Better Auth tem um fluxo específico para alteração de email (authClient.changeEmail)
-// que geralmente envolve verificação por email. Isso não é feito diretamente
-// via `updateUser` ou esta Server Action para manter a segurança.
-// Uma função separada seria necessária para isso.
-
-// Nota sobre alteração de senha e exclusão de conta:
-// Better Auth também tem métodos específicos para isso (authClient.changePassword, authClient.deleteUser).
-// Estes também exigiriam fluxos separados, possivelmente com interações no cliente
-// ou Server Actions dedicadas para chamar `auth.api.setPassword` ou `auth.api.deleteUser`.

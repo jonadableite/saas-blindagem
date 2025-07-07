@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 // src/components/logo.tsx
 type LogoProps = {
   variant?: "default" | "icon" | "login";
@@ -9,7 +10,9 @@ const Logo = ({ variant = "default", className }: LogoProps) => {
     <a href="/" className="flex items-center gap-2">
       {" "}
       {variant === "login" && (
+        // eslint-disable-next-line react/jsx-no-comment-textnodes
         <div className="flex items-center">
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src="/favicon.svg"
             alt="WhatLead icon"

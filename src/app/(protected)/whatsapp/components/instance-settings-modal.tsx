@@ -190,8 +190,8 @@ export function InstanceSettingsModal({
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Mensagem automática:</strong> "Olá! Não atendo chamadas no WhatsApp.
-                      Envie sua mensagem e retorno assim que possível."
+                      <strong>Mensagem automática:</strong> &quot;Olá! Não atendo chamadas no WhatsApp.
+                      Envie sua mensagem e retorno assim que possível.&quot;
                     </AlertDescription>
                   </Alert>
                 )}

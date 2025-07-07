@@ -9,6 +9,44 @@ import { db } from "@/db";
 import { instancesTables } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
+// --- Definições de Tipos ---
+// Idealmente, estes tipos estariam em um arquivo separado como src/types/dashboard.ts
+// e seriam importados aqui e nos componentes que os utilizam (e.g., RecentActivity, InstancesOverview).
+
+type ActivityStatus = "error" | "success" | "warning" | "info";
+
+interface Activity {
+  id: number;
+  type: string;
+  title: string;
+  description: string;
+  timestamp: Date;
+  status: ActivityStatus;
+}
+
+// Tipo inferido diretamente do esquema Drizzle para as instâncias do banco de dados
+type DbInstance = typeof instancesTables.$inferSelect;
+
+// Tipo esperado pelo componente InstancesOverview
+// Assumimos que ele espera 'id' em vez de 'instanceId'
+interface InstanceForOverview {
+  id: string; // Mapeado de instanceId
+  instanceId: string; // O ID real do banco de dados
+  userId: string;
+  instanceName: string;
+  integration: string;
+  status: string; // Se o status da instância também tiver um tipo de união, ajuste aqui
+  ownerJid: string | null;
+  profileName: string | null;
+  profilePicUrl: string | null;
+  qrcode: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+  // Adicione outras propriedades que você usa do seu esquema instancesTables
+}
+// --- Fim das Definições de Tipos ---
+
 export async function getDashboardData() {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -22,7 +60,7 @@ export async function getDashboardData() {
 
   try {
     // Buscar todas as instâncias do usuário
-    const instances = await db
+    const instances: DbInstance[] = await db
       .select()
       .from(instancesTables)
       .where(eq(instancesTables.userId, userId));
@@ -67,14 +105,14 @@ export async function getDashboardData() {
       };
     });
 
-    // Atividades recentes (mock data)
-    const recentActivities = [
+    // Atividades recentes (mock data) - Explicitamente tipado como Activity[]
+    const recentActivities: Activity[] = [
       {
         id: 1,
         type: "message",
         title: "Campanha 'Black Friday' enviada",
         description: "150 mensagens enviadas com sucesso",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 min ago
+        timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 min atrás
         status: "success",
       },
       {
@@ -82,7 +120,7 @@ export async function getDashboardData() {
         type: "instance",
         title: "Instância 'Vendas' conectada",
         description: "Conectado com sucesso ao WhatsApp",
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2h ago
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2h atrás
         status: "success",
       },
       {
@@ -90,7 +128,7 @@ export async function getDashboardData() {
         type: "warning",
         title: "Limite de mensagens atingido",
         description: "Instância 'Suporte' pausada temporariamente",
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4h ago
+        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4h atrás
         status: "warning",
       },
       {
@@ -98,10 +136,18 @@ export async function getDashboardData() {
         type: "campaign",
         title: "Nova campanha criada",
         description: "Campanha 'Newsletter Semanal' programada",
-        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6h ago
+        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6h atrás
         status: "info",
       },
     ];
+
+    // Mapear instâncias para incluir a propriedade 'id' esperada pelo InstancesOverview
+    const instancesList: InstanceForOverview[] = instances
+      .slice(0, 5)
+      .map((inst) => ({
+        ...inst,
+        id: inst.instanceId, // Mapeia instanceId para id
+      }));
 
     return {
       success: true,
@@ -115,7 +161,7 @@ export async function getDashboardData() {
         metrics: mockData,
         chartData,
         recentActivities,
-        instancesList: instances.slice(0, 5), // Top 5 instances
+        instancesList, // Usa a lista mapeada
       },
     };
   } catch (error) {

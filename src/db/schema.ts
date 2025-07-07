@@ -4,19 +4,17 @@ import {
   boolean,
   index,
   integer,
-  jsonb, // Importe jsonb
+  jsonb,
   pgEnum,
   pgTable,
   text,
-  timestamp
+  timestamp,
 } from "drizzle-orm/pg-core";
 import { z } from "zod";
-
 
 // ================================
 // ENUMS
 // ================================
-
 
 export const userRoleEnum = pgEnum("user_role", [
   "user",
@@ -24,11 +22,9 @@ export const userRoleEnum = pgEnum("user_role", [
   "superadmin",
 ]);
 
-
 // ================================
 // TABELAS
 // ================================
-
 
 export const usersTables = pgTable("users_tables", {
   id: text("id").primaryKey(),
@@ -71,7 +67,6 @@ export const usersTables = pgTable("users_tables", {
   lastLoginAt: timestamp("last_login_at"),
   deletedAt: timestamp("deleted_at"),
 });
-
 
 export const instancesTables = pgTable(
   "instances_tables",
@@ -126,7 +121,6 @@ export const instancesTables = pgTable(
   }),
 );
 
-
 export const sessionsTables = pgTable("sessions_tables", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -138,9 +132,10 @@ export const sessionsTables = pgTable("sessions_tables", {
   userId: text("user_id")
     .notNull()
     .references(() => usersTables.id, { onDelete: "cascade" }),
-  impersonatedBy: text("impersonated_by").references(() => usersTables.id, { onDelete: "set null" }),
+  impersonatedBy: text("impersonated_by").references(() => usersTables.id, {
+    onDelete: "set null",
+  }),
 });
-
 
 export const accountsTables = pgTable("accounts_tables", {
   id: text("id").primaryKey(),
@@ -160,7 +155,6 @@ export const accountsTables = pgTable("accounts_tables", {
   updatedAt: timestamp("updated_at").notNull(),
 });
 
-
 export const verificationsTables = pgTable("verifications_tables", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
@@ -170,11 +164,9 @@ export const verificationsTables = pgTable("verifications_tables", {
   updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
 
-
 // ================================
 // RELAÇÕES
 // ================================
-
 
 export const usersRelations = relations(usersTables, ({ many }) => ({
   instances: many(instancesTables),
@@ -185,7 +177,6 @@ export const usersRelations = relations(usersTables, ({ many }) => ({
   }),
 }));
 
-
 export const instancesRelations = relations(
   instancesTables,
   ({ one, many }) => ({
@@ -195,7 +186,6 @@ export const instancesRelations = relations(
     }),
   }),
 );
-
 
 export const sessionsRelations = relations(sessionsTables, ({ one }) => ({
   user: one(usersTables, {
@@ -209,7 +199,6 @@ export const sessionsRelations = relations(sessionsTables, ({ one }) => ({
   }),
 }));
 
-
 export const accountsRelations = relations(accountsTables, ({ one }) => ({
   user: one(usersTables, {
     fields: [accountsTables.userId],
@@ -217,23 +206,19 @@ export const accountsRelations = relations(accountsTables, ({ one }) => ({
   }),
 }));
 
-
 // ================================
 // SCHEMAS DE VALIDAÇÃO ZOD
 // ================================
 
-
 export const CreateInstanceSchema = z.object({
   instanceName: z.string().min(1, "Nome da instância é obrigatório").max(50),
   webhookUrl: z.string().url().optional().or(z.literal("")),
-  webhookEnabled: z.boolean().default(false),
+  webhookEnabled: z.boolean(),
 });
-
 
 // ================================
 // TIPOS TYPESCRIPT
 // ================================
-
 
 export type User = typeof usersTables.$inferSelect;
 export type NewUser = typeof usersTables.$inferInsert;
@@ -248,7 +233,10 @@ export type MessageTypeCounts = {
   media?: number; // Para imagens, vídeos, documentos, etc.
 };
 
-export type Instance = Omit<typeof instancesTables.$inferSelect, 'typeMessagesSent'> & {
+export type Instance = Omit<
+  typeof instancesTables.$inferSelect,
+  "typeMessagesSent"
+> & {
   typeMessagesSent: MessageTypeCounts;
 };
 export type NewInstance = typeof instancesTables.$inferInsert;

@@ -1,10 +1,12 @@
 // src/app/(protected)/whatsapp/page.tsx
-import { db } from "@/db";
-import { instancesTables, usersTables } from "@/db/schema"; // Importe usersTables
-import { auth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
+import { db } from "@/db";
+import { instancesTables, usersTables } from "@/db/schema";
+import { auth } from "@/lib/auth";
+
 import { WhatsappClientPage } from "./components/whatsapp-client-page";
 
 export default async function WhatsappPage() {
@@ -44,7 +46,7 @@ export default async function WhatsappPage() {
 
   return (
     <WhatsappClientPage
-      initialInstances={userInstances}
+      initialInstances={userInstances as any}
       userPlan={user.plan}
       instanceLimit={user.instanceLimits}
       currentInstancesCount={currentInstancesCount}

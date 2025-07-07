@@ -3,17 +3,22 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { User } from "@/db/schema";
 import { authClient } from "@/lib/auth-client";
-
 
 const timezones = [
   "America/Sao_Paulo",
@@ -23,36 +28,35 @@ const timezones = [
   "UTC",
 ];
 
-
 const settingsSchema = z.object({
   timezone: z.string().min(1, "Fuso horário é obrigatório"),
-  theme: z.enum(["light", "dark", "system"]).default("system"),
-  receiveNotifications: z.boolean().default(true),
+  theme: z.enum(["light", "dark", "system"]).optional().default("system"),
+  receiveNotifications: z.boolean().optional().default(true),
 });
-
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
-
-interface SettingsFormProps {
-  user: User;
+interface UserSettingsData {
+  theme?: "light" | "dark" | "system";
+  receiveNotifications?: boolean;
 }
 
+interface SettingsFormProps {
+  user: User & { settings?: UserSettingsData | null };
+}
 
 const SettingsForm: React.FC<SettingsFormProps> = ({ user }) => {
-  const { update } = authClient.useSession();
+  const { refetch } = authClient.useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
   const form = useForm<SettingsFormValues>({
-    resolver: zodResolver(settingsSchema),
+    resolver: zodResolver(settingsSchema) as Resolver<SettingsFormValues, any>,
     defaultValues: {
-      timezone: user.timezone || "America/Sao_Paulo",
-      theme: (user.settings as any)?.theme || "system",
-      receiveNotifications: (user.settings as any)?.receiveNotifications ?? true,
+      timezone: user.timezone ?? "America/Sao_Paulo",
+      theme: user.settings?.theme ?? "system",
+      receiveNotifications: user.settings?.receiveNotifications ?? true,
     },
   });
-
 
   const onSubmit = async (values: SettingsFormValues) => {
     setIsSubmitting(true);
@@ -65,34 +69,23 @@ const SettingsForm: React.FC<SettingsFormProps> = ({ user }) => {
         body: JSON.stringify(values),
       });
 
-
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Falha ao atualizar configurações.");
+        throw new Error(
+          errorData.message || "Falha ao atualizar configurações.",
+        );
       }
 
-
-      // Atualiza a sessão do lado do cliente
-      await update({
-        user: {
-          timezone: values.timezone,
-          settings: {
-            ...(user.settings as object),
-            theme: values.theme,
-            receiveNotifications: values.receiveNotifications,
-          },
-        },
-      });
-
+      // Após a atualização bem-sucedida, force o refetch da sessão
+      await refetch();
 
       toast.success("Configurações atualizadas com sucesso!");
       form.reset(values);
 
-
       // Aplica o tema imediatamente se estiver no navegador
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('theme', values.theme);
-        document.documentElement.setAttribute('data-theme', values.theme);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("theme", values.theme);
+        document.documentElement.setAttribute("data-theme", values.theme);
       }
     } catch (error: any) {
       toast.error(error.message || "Erro ao atualizar configurações.");
@@ -101,13 +94,14 @@ const SettingsForm: React.FC<SettingsFormProps> = ({ user }) => {
     }
   };
 
-
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid gap-1.5">
         <Label htmlFor="timezone">Fuso Horário</Label>
         <Select
-          onValueChange={(value) => form.setValue("timezone", value, { shouldDirty: true })}
+          onValueChange={(value) =>
+            form.setValue("timezone", value, { shouldDirty: true })
+          }
           defaultValue={form.watch("timezone")}
         >
           <SelectTrigger id="timezone">
@@ -122,18 +116,25 @@ const SettingsForm: React.FC<SettingsFormProps> = ({ user }) => {
           </SelectContent>
         </Select>
         {form.formState.errors.timezone && (
-          <p className="text-sm text-red-500">{form.formState.errors.timezone.message}</p>
+          <p className="text-sm text-red-500">
+            {form.formState.errors.timezone.message}
+          </p>
         )}
       </div>
 
-
       <div className="flex items-center justify-between">
-        <div className="grid gap-1.5 flex-1">
+        <div className="grid flex-1 gap-1.5">
           <Label htmlFor="theme">Tema</Label>
-          <p className="text-sm text-muted-foreground">Escolha o tema da interface: claro, escuro ou do sistema.</p>
+          <p className="text-muted-foreground text-sm">
+            Escolha o tema da interface: claro, escuro ou do sistema.
+          </p>
         </div>
         <Select
-          onValueChange={(value) => form.setValue("theme", value as "light" | "dark" | "system", { shouldDirty: true })}
+          onValueChange={(value) =>
+            form.setValue("theme", value as "light" | "dark" | "system", {
+              shouldDirty: true,
+            })
+          }
           defaultValue={form.watch("theme")}
         >
           <SelectTrigger className="w-[180px]">
@@ -147,19 +148,25 @@ const SettingsForm: React.FC<SettingsFormProps> = ({ user }) => {
         </Select>
       </div>
 
-
       <div className="flex items-center justify-between">
-        <div className="grid gap-1.5 flex-1">
-          <Label htmlFor="receiveNotifications">Receber Notificações por Email</Label>
-          <p className="text-sm text-muted-foreground">Receba atualizações importantes e alertas por email.</p>
+        <div className="grid flex-1 gap-1.5">
+          <Label htmlFor="receiveNotifications">
+            Receber Notificações por Email
+          </Label>
+          <p className="text-muted-foreground text-sm">
+            Receba atualizações importantes e alertas por email.
+          </p>
         </div>
         <Switch
           id="receiveNotifications"
           checked={form.watch("receiveNotifications")}
-          onCheckedChange={(checked) => form.setValue("receiveNotifications", checked, { shouldDirty: true })}
+          onCheckedChange={(checked) =>
+            form.setValue("receiveNotifications", checked, {
+              shouldDirty: true,
+            })
+          }
         />
       </div>
-
 
       <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
         {isSubmitting ? "Salvando..." : "Salvar Configurações"}
@@ -167,6 +174,5 @@ const SettingsForm: React.FC<SettingsFormProps> = ({ user }) => {
     </form>
   );
 };
-
 
 export default SettingsForm;

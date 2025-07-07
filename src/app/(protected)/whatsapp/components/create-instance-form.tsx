@@ -28,6 +28,8 @@ export function CreateInstanceForm({ onClose }: CreateInstanceFormProps) {
     resolver: zodResolver(CreateInstanceSchema),
     defaultValues: {
       instanceName: "",
+      webhookUrl: "",
+      webhookEnabled: false,
     },
   });
 

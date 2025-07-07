@@ -1,4 +1,4 @@
-// src/lib/auth.ts
+//src/lib/auth.ts
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, customSession } from "better-auth/plugins";
@@ -35,22 +35,22 @@ export const auth = betterAuth({
           instances: true,
         },
       });
-
       const firstAccount = userData?.accounts?.[0];
-
       const aggregatedTypeMessagesSent: schema.MessageTypeCounts = {};
       if (userData?.instances) {
         for (const instance of userData.instances) {
-          const instanceCounts = instance.typeMessagesSent as schema.MessageTypeCounts;
+          const instanceCounts =
+            instance.typeMessagesSent as schema.MessageTypeCounts;
           for (const key in instanceCounts) {
             if (Object.prototype.hasOwnProperty.call(instanceCounts, key)) {
               const messageType = key as keyof schema.MessageTypeCounts;
-              aggregatedTypeMessagesSent[messageType] = (aggregatedTypeMessagesSent[messageType] || 0) + (instanceCounts[messageType] || 0);
+              aggregatedTypeMessagesSent[messageType] =
+                (aggregatedTypeMessagesSent[messageType] || 0) +
+                (instanceCounts[messageType] || 0);
             }
           }
         }
       }
-
       return {
         user: {
           ...user,
@@ -64,6 +64,15 @@ export const auth = betterAuth({
           timezone: userData?.timezone,
           instanceLimits: userData?.instanceLimits,
           instanceTotal: userData?.instanceTotal,
+          dailyMessageLimit: userData?.dailyMessageLimit,
+          monthlyMessageLimit: userData?.monthlyMessageLimit,
+          createdAt: userData?.createdAt,
+          updatedAt: userData?.updatedAt,
+          stripeCustomerId: userData?.stripeCustomerId,
+          stripeSubscriptionId: userData?.stripeSubscriptionId,
+          isActive: userData?.isActive,
+          lastLoginAt: userData?.lastLoginAt,
+          deletedAt: userData?.deletedAt,
           typeMessagesSent: aggregatedTypeMessagesSent,
           account: firstAccount
             ? {

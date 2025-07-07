@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CreateInstanceSchema, Instance } from "@/db/schema";
+
 import { InstanceList } from "./instance-list";
 
 interface WhatsappClientPageProps {
@@ -46,7 +47,9 @@ export function WhatsappClientPage({
   const handleCreateInstance = async () => {
     // Verificação de limite antes de tentar criar a instância
     if (currentInstancesCount >= instanceLimit) {
-      toast.error(`Você atingiu o limite de ${instanceLimit} instância(s) para o seu plano.`);
+      toast.error(
+        `Você atingiu o limite de ${instanceLimit} instância(s) para o seu plano.`,
+      );
       setIsModalOpen(false); // Fecha o modal se o limite for atingido
       return;
     }
@@ -67,17 +70,54 @@ export function WhatsappClientPage({
         return;
       }
 
-      const newInstance = await createInstance(validatedFields.data);
+      const newInstanceResponse = await createInstance(validatedFields.data); // Renomeado para clareza
 
-      if (newInstance) {
-        setInstances((prev) => [...prev, newInstance]);
+      let instanceToAdd: Instance | undefined;
+
+      // Verifica se a resposta é um objeto e contém a propriedade 'instance'
+      if (
+        typeof newInstanceResponse === "object" &&
+        newInstanceResponse !== null &&
+        "instance" in newInstanceResponse &&
+        newInstanceResponse.instance
+      ) {
+        // Se sim, a instância está aninhada na propriedade 'instance'
+        instanceToAdd = newInstanceResponse.instance as Instance;
+      } else if (
+        typeof newInstanceResponse === "object" &&
+        newInstanceResponse !== null &&
+        !("error" in newInstanceResponse)
+      ) {
+        // Se não tem 'instance' nem 'error', assume que a própria resposta é a instância
+        // Isso cobre o caso em que 'createInstance' retorna a Instance diretamente
+        instanceToAdd = newInstanceResponse as unknown as Instance;
+      }
+
+      if (instanceToAdd) {
+        setInstances((prev) => [...prev, instanceToAdd]);
         toast.success("Instância criada com sucesso!");
         setInstanceName("");
         setWebhookUrl("");
         setWebhookEnabled(false);
         setIsModalOpen(false);
       } else {
-        toast.error("Erro ao criar instância. Tente novamente.");
+        // Lida com os casos de erro
+        let errorMessage = "Erro ao criar instância. Tente novamente.";
+        if (
+          typeof newInstanceResponse === "object" &&
+          newInstanceResponse !== null &&
+          "error" in newInstanceResponse
+        ) {
+          if (typeof newInstanceResponse.error === "string") {
+            errorMessage = newInstanceResponse.error;
+          } else if (
+            newInstanceResponse.error &&
+            typeof newInstanceResponse.error.message === "string"
+          ) {
+            errorMessage = newInstanceResponse.error.message;
+          }
+        }
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error("Failed to create instance:", error);
@@ -88,55 +128,57 @@ export function WhatsappClientPage({
   };
 
   // Lógica para desabilitar o botão de criação de instância
-  const isCreateButtonDisabled = currentInstancesCount >= instanceLimit || isCreatingInstance;
-  const instancesPercentage = instanceLimit > 0 ? (currentInstancesCount / instanceLimit) * 100 : 0;
+  const isCreateButtonDisabled =
+    currentInstancesCount >= instanceLimit || isCreatingInstance;
+  const instancesPercentage =
+    instanceLimit > 0 ? (currentInstancesCount / instanceLimit) * 100 : 0;
 
   return (
-    <div className="flex flex-col flex-grow p-6 space-y-6">
+    <div className="flex flex-grow flex-col space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Minhas Instâncias</h1>
+        <h1 className="text-foreground text-3xl font-bold">
+          Minhas Instâncias
+        </h1>
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
             <Button
               onClick={() => {
                 if (currentInstancesCount >= instanceLimit) {
-                  toast.error(`Você atingiu o limite de ${instanceLimit} instância(s) para o seu plano.`);
+                  toast.error(
+                    `Você atingiu o limite de ${instanceLimit} instância(s) para o seu plano.`,
+                  );
                 } else {
                   setIsModalOpen(true);
                 }
               }}
               disabled={isCreateButtonDisabled}
-              className={`
-                font-semibold py-2 px-6 rounded-lg shadow-md hover:shadow-lg
-                transition-opacity duration-300
-                flex items-center justify-center
-                ${isCreateButtonDisabled
-                  ? 'bg-electric cursor-not-allowed opacity-90'
+              className={`flex items-center justify-center rounded-lg px-6 py-2 font-semibold shadow-md transition-opacity duration-300 hover:shadow-lg ${
+                isCreateButtonDisabled
+                  ? "bg-electric cursor-not-allowed opacity-90"
                   : isCreatingInstance
-                    ? 'bg-yellow-600 cursor-wait opacity-70'
-                    : 'bg-gradient-to-r from-electric to-blue-600 hover:opacity-90'
-                }
-              `}
+                    ? "cursor-wait bg-yellow-600 opacity-70"
+                    : "from-electric bg-gradient-to-r to-blue-600 hover:opacity-90"
+              } `}
             >
               {isCreatingInstance ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Criando...
                 </>
               ) : currentInstancesCount >= instanceLimit ? (
                 <>
-                  <Lock className="w-5 h-5 mr-2" />
+                  <Lock className="mr-2 h-5 w-5" />
                   Limite Atingido ({instanceLimit})
                 </>
               ) : (
                 <>
-                  <Plus className="w-5 h-5 mr-2" />
+                  <Plus className="mr-2 h-5 w-5" />
                   Nova Instância
                 </>
               )}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] bg-card text-foreground border-border">
+          <DialogContent className="bg-card text-foreground border-border sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Criar Nova Instância</DialogTitle>
               <DialogDescription>
@@ -152,7 +194,7 @@ export function WhatsappClientPage({
                   id="instanceName"
                   value={instanceName}
                   onChange={(e) => setInstanceName(e.target.value)}
-                  className="col-span-3 bg-input text-foreground"
+                  className="bg-input text-foreground col-span-3"
                   placeholder="Minha Instância de Vendas"
                 />
               </div>
@@ -164,7 +206,7 @@ export function WhatsappClientPage({
                   id="webhookUrl"
                   value={webhookUrl}
                   onChange={(e) => setWebhookUrl(e.target.value)}
-                  className="col-span-3 bg-input text-foreground"
+                  className="bg-input text-foreground col-span-3"
                   placeholder="https://seuservidor.com/webhook"
                   disabled={!webhookEnabled}
                 />
@@ -181,7 +223,10 @@ export function WhatsappClientPage({
                 />
               </div>
             </div>
-            <Button onClick={handleCreateInstance} disabled={isCreatingInstance}>
+            <Button
+              onClick={handleCreateInstance}
+              disabled={isCreatingInstance}
+            >
               {isCreatingInstance ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -196,22 +241,23 @@ export function WhatsappClientPage({
       </div>
 
       {/* Bloco de Métricas - Refatorado */}
-      <div className="flex items-center gap-4 bg-deep/60 backdrop-blur-xl px-6 py-3 rounded-xl border border-electric/40 shadow-lg flex-wrap mx-auto w-fit">
+      <div className="bg-deep/60 border-electric/40 mx-auto flex w-fit flex-wrap items-center gap-4 rounded-xl border px-6 py-3 shadow-lg backdrop-blur-xl">
         {/* Métrica: Instâncias */}
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-gray-300">Instâncias:</span>
-          <span className="text-base font-semibold text-neon-green">
+          <span className="text-neon-green text-base font-semibold">
             {currentInstancesCount} / {instanceLimit}
           </span>
           {/* Opcional: Porcentagem de instâncias */}
           {instanceLimit > 0 && (
-            <span className={`font-semibold text-sm ${instancesPercentage > 80 ? 'text-red-500' : ''}`}>
+            <span
+              className={`text-sm font-semibold ${instancesPercentage > 80 ? "text-red-500" : ""}`}
+            >
               ({instancesPercentage.toFixed(0)}%)
             </span>
           )}
         </div>
       </div>
-
 
       <InstanceList initialInstances={instances} />
     </div>

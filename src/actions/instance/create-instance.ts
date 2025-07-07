@@ -96,7 +96,6 @@ export async function createInstance(input: CreateInstanceInput) {
       instanceId: instanceData.instance.instanceId,
       userId: userId,
       instanceName: instanceData.instance.instanceName,
-      number: instanceData.instance.number || null,
       integration: instanceData.instance.integration || "WHATSAPP-BAILEYS",
       status: instanceData.instance.status || "connecting",
       ownerJid: instanceData.instance.ownerJid || null,
