@@ -182,7 +182,7 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [currentQrCodeData, setCurrentQrCodeData] = useState<{
-    qrCode?: string;
+    base64?: string;
     pairingCode?: string;
   } | null>(null);
   const [loadingQrCode, setLoadingQrCode] = useState(false);
@@ -231,7 +231,7 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
 
     if (result.success) {
       setCurrentQrCodeData({
-        qrCode: result.qrCode,
+        base64: result.qrCode,
         pairingCode: result.pairingCode,
       });
     } else {
@@ -404,14 +404,14 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                       {(instance.status === "qrcode" ||
                         instance.status === "connecting" ||
                         instance.status === "start") && (
-                        <ActionButton
-                          onClick={() => handleOpenQrModal(instance.instanceName)}
-                          title="Ver QR Code"
-                          variant="secondary"
-                        >
-                          <QrCode className="h-4 w-4" />
-                        </ActionButton>
-                      )}
+                          <ActionButton
+                            onClick={() => handleOpenQrModal(instance.instanceName)}
+                            title="Ver QR Code"
+                            variant="secondary"
+                          >
+                            <QrCode className="h-4 w-4" />
+                          </ActionButton>
+                        )}
 
                       {instance.status === "open" && (
                         <>
@@ -527,14 +527,16 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       <p className="text-muted-foreground">Carregando QR Code...</p>
                     </div>
-                  ) : currentQrCodeData?.qrCode ? (
+                  ) : currentQrCodeData?.base64 ? (
                     <div className="text-center space-y-4">
                       <div className="mx-auto w-fit p-4 bg-white rounded-lg shadow-sm">
                         <img
-                          src={`data:image/png;base64,${currentQrCodeData.qrCode}`}
+                          src={currentQrCodeData.base64}
                           alt="QR Code"
                           className="w-64 h-64 object-contain"
                         />
+
+
                       </div>
                       <p className="text-muted-foreground">
                         Escaneie com o WhatsApp no seu celular
@@ -560,6 +562,7 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                     </div>
                   )}
 
+
                   <Button
                     onClick={handleCloseQrModal}
                     className="w-full"
@@ -572,6 +575,7 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
 
       {/* Modal de Configurações */}
       <InstanceSettingsModal

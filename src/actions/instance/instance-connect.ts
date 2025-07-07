@@ -100,7 +100,7 @@ export async function getInstanceQrCode(input: InstanceConnectInput) {
 
     return {
       success: true,
-      qrCode: qrCodeData.code || null,
+      qrCode: qrCodeData.base64 || null,
       pairingCode: qrCodeData.pairingCode || null,
     };
   } catch (error) {

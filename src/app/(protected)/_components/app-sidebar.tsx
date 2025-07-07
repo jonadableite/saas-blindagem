@@ -2,12 +2,10 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Bot,
   Crown,
   LayoutDashboard,
-  MessageSquareText,
   Sparkles,
-  Users, // Importe o ícone Users
+  Users
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -81,50 +79,50 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Instâncias",
           url: "/whatsapp",
         },
-        {
-          title: "Contatos",
-          url: "/whatsapp/contacts",
-        },
+        // {
+        //   title: "Contatos",
+        //   url: "/whatsapp/contacts",
+        // },
       ],
     },
-    {
-      title: "Campanhas",
-      url: "/campaigns",
-      icon: MessageSquareText,
-      items: [
-        {
-          title: "Todas as Campanhas",
-          url: "/campaigns",
-        },
-        {
-          title: "Agendadas",
-          url: "/campaigns/scheduled",
-        },
-        {
-          title: "Templates",
-          url: "/campaigns/templates",
-        },
-      ],
-    },
-    {
-      title: "Agentes IA",
-      url: "/agents",
-      icon: Bot,
-      items: [
-        {
-          title: "Meus Agentes",
-          url: "/agents",
-        },
-        {
-          title: "Criar Agente",
-          url: "/agents/create",
-        },
-        {
-          title: "chat",
-          url: "/agents/chat",
-        },
-      ],
-    },
+    // {
+    //   title: "Campanhas",
+    //   url: "/campaigns",
+    //   icon: MessageSquareText,
+    //   items: [
+    //     {
+    //       title: "Todas as Campanhas",
+    //       url: "/campaigns",
+    //     },
+    //     {
+    //       title: "Agendadas",
+    //       url: "/campaigns/scheduled",
+    //     },
+    //     {
+    //       title: "Templates",
+    //       url: "/campaigns/templates",
+    //     },
+    //   ],
+    // },
+    // {
+    //   title: "Agentes IA",
+    //   url: "/agents",
+    //   icon: Bot,
+    //   items: [
+    //     {
+    //       title: "Meus Agentes",
+    //       url: "/agents",
+    //     },
+    //     {
+    //       title: "Criar Agente",
+    //       url: "/agents/create",
+    //     },
+    //     {
+    //       title: "chat",
+    //       url: "/agents/chat",
+    //     },
+    //   ],
+    // },
   ];
 
   // REMOVIDO: A lógica para adicionar o item "Admin" ao navMain foi movida para o JSX.
