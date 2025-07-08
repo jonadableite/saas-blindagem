@@ -1,10 +1,11 @@
 // src/components/team-switcher.tsx
 "use client";
 
-import { ChevronsUpDown, LucideIcon, Plus } from "lucide-react";
+import { ChevronsUpDown, Plus } from "lucide-react";
+import Link from "next/link"; // Importar Link do Next.js para o botão "Criar Nova Organização"
 import * as React from "react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Importar AvatarImage
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,18 +23,63 @@ import {
 } from "@/components/ui/sidebar";
 
 interface Team {
+  id: string; // Adicionado ID para identificação única
   name: string;
-  logo?: LucideIcon;
-  plan: string;
+  logo?: string; // Alterado de LucideIcon para string (URL)
+  plan: string; // Assumindo que o plano é uma propriedade da organização ou é injetado
 }
 
 interface TeamSwitcherProps {
   teams: Team[];
+  initialActiveTeam?: Team | null; // Nova prop para a equipe ativa inicial
+  onTeamChange: (team: Team) => void; // Nova prop para notificar a mudança
 }
 
-export function TeamSwitcher({ teams }: TeamSwitcherProps) {
+export function TeamSwitcher({
+  teams,
+  initialActiveTeam,
+  onTeamChange,
+}: TeamSwitcherProps) {
   const { isMobile } = useSidebar();
-  const [activeTeam, setActiveTeam] = React.useState(teams[0]);
+  // Inicializa activeTeam com initialActiveTeam, ou a primeira equipe, ou null
+  const [activeTeam, setActiveTeam] = React.useState<Team | null>(
+    initialActiveTeam || teams[0] || null,
+  );
+
+  // Atualiza activeTeam se a prop initialActiveTeam mudar (ex: após a busca de dados)
+  React.useEffect(() => {
+    if (initialActiveTeam && initialActiveTeam.id !== activeTeam?.id) {
+      setActiveTeam(initialActiveTeam);
+    } else if (!initialActiveTeam && teams.length > 0 && !activeTeam) {
+      // Se initialActiveTeam for nulo mas as equipes forem carregadas, define a primeira
+      setActiveTeam(teams[0]);
+    }
+  }, [initialActiveTeam, activeTeam, teams]);
+
+  const handleSelectTeam = (team: Team) => {
+    setActiveTeam(team);
+    onTeamChange(team); // Notifica o componente pai da mudança
+  };
+
+  // Exibe um placeholder ou retorna nulo se nenhuma equipe ativa estiver definida ainda
+  if (!activeTeam) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" className="justify-center">
+            <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+              <span className="text-xs">...</span>
+            </div>
+            {!isMobile && (
+              <span className="flex-grow truncate text-sm font-semibold">
+                Carregando organizações...
+              </span>
+            )}
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
 
   return (
     <SidebarMenu>
@@ -46,8 +92,12 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
             >
               <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 <Avatar className="h-6 w-6">
-                  {activeTeam.logo ? ( // Conditional rendering for icon
-                    <activeTeam.logo className="h-4 w-4" /> // Render the icon component directly
+                  {activeTeam.logo ? ( // Renderização condicional para o logo (URL)
+                    <AvatarImage
+                      src={activeTeam.logo}
+                      alt={activeTeam.name}
+                      className="object-cover"
+                    />
                   ) : (
                     <AvatarFallback className="bg-transparent text-inherit">
                       {activeTeam.name.slice(0, 2).toUpperCase()}
@@ -55,60 +105,53 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
                   )}
                 </Avatar>
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
+              {/* Só mostra o texto quando não está colapsado (ou no mobile se a sidebar estiver expandida) */}
+              {!isMobile && (
+                <span className="flex-grow truncate text-sm font-semibold">
                   {activeTeam.name}
                 </span>
-                <span className="text-muted-foreground truncate text-xs">
-                  {activeTeam.plan}
-                </span>
-              </div>
-              <ChevronsUpDown className="ml-auto" />
+              )}
+              <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            align="start"
-            side={isMobile ? "bottom" : "right"}
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Organizações
-            </DropdownMenuLabel>
-            {teams.map((team, index) => (
+          <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
+            <DropdownMenuLabel>Minhas Organizações</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {teams.map((team) => (
               <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
-                className="gap-2 p-2"
+                key={team.id} // Usa team.id como chave
+                className="cursor-pointer"
+                onSelect={() => handleSelectTeam(team)}
               >
-                <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-sm border">
-                  <Avatar className="h-4 w-4">
-                    {team.logo ? (
-                      <team.logo className="h-3 w-3" />
-                    ) : (
-                      <AvatarFallback className="bg-transparent text-xs text-inherit">
-                        {team.name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{team.name}</span>
-                  <span className="text-muted-foreground truncate text-xs">
-                    {team.plan}
+                <Avatar className="mr-2 h-5 w-5">
+                  {team.logo ? (
+                    <AvatarImage
+                      src={team.logo}
+                      alt={team.name}
+                      className="object-cover"
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-transparent text-inherit">
+                      {team.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <span>{team.name}</span>
+                {team.id === activeTeam.id && ( // Indica a equipe ativa
+                  <span className="text-muted-foreground ml-auto text-xs">
+                    Ativa
                   </span>
-                </div>
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                )}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="bg-background flex size-6 items-center justify-center rounded-md border">
-                <Plus className="size-4" />
-              </div>
-              <div className="text-muted-foreground font-medium">
-                Adicionar organização
-              </div>
+            {/* Usar Link do Next.js para navegação */}
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/organizations/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Criar Nova Organização
+                <DropdownMenuShortcut>⇧⌘N</DropdownMenuShortcut>
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
