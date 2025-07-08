@@ -3,15 +3,19 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Activity, // Para StatusBadge
+  AlertCircle, // Para StatusBadge
+  Globe, // Para o botão de Proxy
   Loader2,
   LogOut,
   MessageCircle,
-  PowerOff,
   QrCode,
   RefreshCcw,
   Search,
   Settings,
   Trash2,
+  Wifi, // Para StatusBadge
+  WifiOff, // Para StatusBadge
 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -25,13 +29,16 @@ import {
   restartInstance,
 } from "@/actions/instance";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { instancesTables } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
+import { InstanceProxyModal } from "./instance-proxy-modal";
 import { InstanceSettingsModal } from "./instance-settings-modal";
+import { TooltipActionButton } from "./tooltip-action-button";
 
 export type Instance = typeof instancesTables.$inferSelect;
 
@@ -39,71 +46,79 @@ interface InstanceListProps {
   initialInstances: Instance[];
 }
 
-// Componente de status elegante
-// const StatusBadge = ({ status }: { status: string | null }) => {
-//   const getStatusConfig = (status: string | null) => {
-//     switch (status) {
-//       case "open":
-//       case "online":
-//         return {
-//           icon: Wifi,
-//           variant: "default" as const,
-//           className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400",
-//           text: "Online",
-//           pulse: true,
-//         };
-//       case "connecting":
-//       case "start":
-//         return {
-//           icon: Activity,
-//           variant: "secondary" as const,
-//           className: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400",
-//           text: "Conectando",
-//           pulse: true,
-//         };
-//       case "qrcode":
-//         return {
-//           icon: QrCode,
-//           variant: "secondary" as const,
-//           className: "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400",
-//           text: "QR Code",
-//           pulse: true,
-//         };
-//       case "close":
-//       case "offline":
-//         return {
-//           icon: WifiOff,
-//           variant: "secondary" as const,
-//           className: "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/20 dark:text-red-400",
-//           text: "Offline",
-//           pulse: false,
-//         };
-//       default:
-//         return {
-//           icon: AlertCircle,
-//           variant: "secondary" as const,
-//           className: "bg-gray-500/10 text-gray-600 border-gray-500/20 dark:bg-gray-500/20 dark:text-gray-400",
-//           text: "Desconhecido",
-//           pulse: false,
-//         };
-//     }
-//   };
+// Componente de status elegante (descomentado e melhorado)
+const StatusBadge = ({ status }: { status: string | null }) => {
+  const getStatusConfig = (status: string | null) => {
+    switch (status) {
+      case "open":
+      case "online":
+        return {
+          icon: Wifi,
+          variant: "default" as const,
+          className:
+            "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400",
+          text: "Online",
+          pulse: true,
+        };
+      case "connecting":
+      case "start":
+        return {
+          icon: Activity,
+          variant: "secondary" as const,
+          className:
+            "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400",
+          text: "Conectando",
+          pulse: true,
+        };
+      case "qrcode":
+        return {
+          icon: QrCode,
+          variant: "secondary" as const,
+          className:
+            "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400",
+          text: "QR Code",
+          pulse: true,
+        };
+      case "close":
+      case "offline":
+        return {
+          icon: WifiOff,
+          variant: "secondary" as const,
+          className:
+            "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/20 dark:text-red-400",
+          text: "Offline",
+          pulse: false,
+        };
+      default:
+        return {
+          icon: AlertCircle,
+          variant: "secondary" as const,
+          className:
+            "bg-gray-500/10 text-gray-600 border-gray-500/20 dark:bg-gray-500/20 dark:text-gray-400",
+          text: "Desconhecido",
+          pulse: false,
+        };
+    }
+  };
 
-//   const config = getStatusConfig(status);
-//   const IconComponent = config.icon;
+  const config = getStatusConfig(status);
+  const IconComponent = config.icon;
 
-//   return (
-//     <Badge variant={config.variant} className={cn("flex items-center gap-1.5 px-2 py-1", config.className)}>
-//       <motion.div
-//         animate={config.pulse ? { scale: [1, 1.2, 1] } : {}}
-//         transition={{ duration: 2, repeat: Infinity }}
-//       >
-//         <IconComponent className="h-3 w-3" />
-//       </motion.div>
-//       <span className="text-xs font-medium">{config.text}</span>
-//     </Badge>
-//   );
-// };
+  return (
+    <Badge
+      variant={config.variant}
+      className={cn("flex items-center gap-1.5 px-2 py-1", config.className)}
+    >
+      <motion.div
+        animate={config.pulse ? { scale: [1, 1.2, 1] } : {}}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        <IconComponent className="h-3 w-3" />
+      </motion.div>
+      <span className="text-xs font-medium">{config.text}</span>
+    </Badge>
+  );
+};
 
 // Avatar com indicador de status
 const InstanceAvatar = ({ instance }: { instance: Instance }) => {
@@ -128,7 +143,7 @@ const InstanceAvatar = ({ instance }: { instance: Instance }) => {
         </AvatarFallback>
       </Avatar>
 
-      {/* Status indicator */}
+      {/* Indicador de status */}
       <motion.div
         className={cn(
           "border-background absolute -right-0.5 -bottom-0.5 h-4 w-4 rounded-full border-2",
@@ -138,31 +153,6 @@ const InstanceAvatar = ({ instance }: { instance: Instance }) => {
         transition={{ duration: 2, repeat: Infinity }}
       />
     </div>
-  );
-};
-
-// Botão de ação elegante
-const ActionButton = ({
-  children,
-  onClick,
-  disabled,
-  variant = "outline",
-  size = "sm",
-  isLoading,
-  className,
-  ...props
-}: any) => {
-  return (
-    <Button
-      variant={variant}
-      size={size}
-      onClick={onClick}
-      disabled={disabled || isLoading}
-      className={cn("h-9 w-9 p-0", className)}
-      {...props}
-    >
-      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : children}
-    </Button>
   );
 };
 
@@ -182,6 +172,15 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
 
   // Estado para o modal de configurações
   const [settingsModal, setSettingsModal] = useState<{
+    isOpen: boolean;
+    instanceName: string;
+  }>({
+    isOpen: false,
+    instanceName: "",
+  });
+
+  // Estado para o modal de proxy
+  const [proxyModal, setProxyModal] = useState<{
     isOpen: boolean;
     instanceName: string;
   }>({
@@ -259,6 +258,31 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
     });
   }, []);
 
+  // Funções para o modal de proxy
+  const handleOpenProxyModal = useCallback((instanceName: string) => {
+    setProxyModal({
+      isOpen: true,
+      instanceName,
+    });
+  }, []);
+
+  const handleCloseProxyModal = useCallback(() => {
+    setProxyModal({
+      isOpen: false,
+      instanceName: "",
+    });
+  }, []);
+
+  const handleProxySetSuccess = useCallback(
+    (instanceName: string) => {
+      // Opcionalmente, atualize os detalhes da instância se o status do proxy afetar o cartão principal
+      // fetchCompleteInstanceDetails(instanceName);
+      toast.success(`Proxy para ${instanceName} configurado com sucesso!`);
+      handleCloseProxyModal();
+    },
+    [handleCloseProxyModal],
+  );
+
   useEffect(() => {
     if (!hasInitialized && initialInstances.length > 0) {
       setHasInitialized(true);
@@ -280,7 +304,7 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
           fetchCompleteInstanceDetails(instance.instanceName);
         }
       });
-    }, 90000);
+    }, 90000); // Consulta a cada 90 segundos
 
     return () => clearInterval(intervalId);
   }, [fetchCompleteInstanceDetails]);
@@ -309,7 +333,7 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
       </div>
 
       {/* Grid de instâncias */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {filteredInstances.length === 0 ? (
             <motion.div
@@ -363,7 +387,8 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                           )}
                         </div>
                       </div>
-                      <StatusBadge status={instance.status} />
+                      <StatusBadge status={instance.status} />{" "}
+                      {/* Badge de Status */}
                     </div>
                   </CardHeader>
 
@@ -383,117 +408,148 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                           </div>
                         </div>
                       )}
-
-                      {/* <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                        <Bot className="h-4 w-4 text-primary" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Agentes AI</p>
-                          <p className="text-sm font-semibold">0</p>
-                        </div>
-                      </div> */}
                     </div>
 
                     {/* Botões de ação */}
-                    <div className="flex flex-wrap gap-2 border-t pt-2">
-                      <ActionButton
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <TooltipActionButton
                         onClick={() =>
                           fetchCompleteInstanceDetails(instance.instanceName)
                         }
                         isLoading={loadingStatus[instance.instanceName]}
-                        title="Atualizar"
+                        tooltip="Atualizar"
                       >
                         <RefreshCcw className="h-4 w-4" />
-                      </ActionButton>
+                      </TooltipActionButton>
 
                       {(instance.status === "qrcode" ||
                         instance.status === "connecting" ||
                         instance.status === "start") && (
-                        <ActionButton
+                        <TooltipActionButton
                           onClick={() =>
                             handleOpenQrModal(instance.instanceName)
                           }
-                          title="Ver QR Code"
+                          isLoading={loadingQrCode}
+                          tooltip="Ver QR Code"
                           variant="secondary"
                         >
                           <QrCode className="h-4 w-4" />
-                        </ActionButton>
+                        </TooltipActionButton>
                       )}
 
-                      {instance.status === "open" && (
-                        <>
-                          <ActionButton
-                            onClick={() =>
-                              handleOpenSettings(instance.instanceName)
-                            }
-                            title="Configurações"
-                            variant="secondary"
-                          >
-                            <Settings className="h-4 w-4" />
-                          </ActionButton>
-
-                          {/* <ActionButton title="Agentes AI" variant="secondary">
-                            <Bot className="h-4 w-4" />
-                          </ActionButton> */}
-                        </>
-                      )}
-
-                      {instance.status !== "close" &&
-                        instance.status !== "offline" && (
-                          <ActionButton
-                            onClick={async () => {
-                              const result = await restartInstance({
-                                instanceName: instance.instanceName,
-                              });
-                              if (result.success) {
-                                toast.success(result.success);
-                                fetchCompleteInstanceDetails(
-                                  instance.instanceName,
-                                );
-                              } else {
-                                toast.error(
-                                  result.error ||
-                                    "Erro ao reiniciar instância.",
-                                );
-                              }
-                            }}
-                            title="Reiniciar"
-                            variant="secondary"
-                          >
-                            <PowerOff className="h-4 w-4" />
-                          </ActionButton>
-                        )}
-
-                      {instance.status === "open" && (
-                        <ActionButton
+                      {instance.status !== "offline" && (
+                        <TooltipActionButton
                           onClick={async () => {
+                            setLoadingStatus((prev) => ({
+                              ...prev,
+                              [`logout-${instance.instanceName}`]: true,
+                            }));
                             const result = await logoutInstance({
                               instanceName: instance.instanceName,
                             });
+                            setLoadingStatus((prev) => ({
+                              ...prev,
+                              [`logout-${instance.instanceName}`]: false,
+                            }));
                             if (result.success) {
-                              toast.success(result.success);
+                              toast.success(
+                                `Instância ${instance.instanceName} desconectada.`,
+                              );
                               fetchCompleteInstanceDetails(
                                 instance.instanceName,
                               );
                             } else {
                               toast.error(
-                                result.error || "Erro ao fazer logout.",
+                                result.error ||
+                                  "Erro ao desconectar instância. Tente novamente.",
                               );
                             }
                           }}
-                          title="Logout"
-                          variant="secondary"
+                          isLoading={
+                            loadingStatus[`logout-${instance.instanceName}`]
+                          }
+                          tooltip="Desconectar"
                         >
                           <LogOut className="h-4 w-4" />
-                        </ActionButton>
+                        </TooltipActionButton>
                       )}
 
-                      <ActionButton
+                      <TooltipActionButton
                         onClick={async () => {
+                          setLoadingStatus((prev) => ({
+                            ...prev,
+                            [`restart-${instance.instanceName}`]: true,
+                          }));
+                          const result = await restartInstance({
+                            instanceName: instance.instanceName,
+                          });
+                          setLoadingStatus((prev) => ({
+                            ...prev,
+                            [`restart-${instance.instanceName}`]: false,
+                          }));
+                          if (result.success) {
+                            toast.success(
+                              `Instância ${instance.instanceName} reiniciada.`,
+                            );
+                            fetchCompleteInstanceDetails(instance.instanceName);
+                          } else {
+                            toast.error(
+                              result.error ||
+                                "Erro ao reiniciar instância. Tente novamente.",
+                            );
+                          }
+                        }}
+                        isLoading={
+                          loadingStatus[`restart-${instance.instanceName}`]
+                        }
+                        tooltip="Reiniciar"
+                      >
+                        <RefreshCcw className="h-4 w-4" />
+                      </TooltipActionButton>
+
+                      {/* Novo Botão de Proxy */}
+                      <TooltipActionButton
+                        onClick={() =>
+                          handleOpenProxyModal(instance.instanceName)
+                        }
+                        tooltip="Configurar Proxy"
+                      >
+                        <Globe className="h-4 w-4" />
+                      </TooltipActionButton>
+
+                      <TooltipActionButton
+                        onClick={() =>
+                          handleOpenSettings(instance.instanceName)
+                        }
+                        tooltip="Configurações"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </TooltipActionButton>
+
+                      <TooltipActionButton
+                        onClick={async () => {
+                          if (
+                            !confirm(
+                              `Tem certeza que deseja deletar a instância ${instance.instanceName}? Esta ação é irreversível.`,
+                            )
+                          ) {
+                            return;
+                          }
+                          setLoadingStatus((prev) => ({
+                            ...prev,
+                            [`delete-${instance.instanceName}`]: true,
+                          }));
                           const result = await deleteInstance({
                             instanceName: instance.instanceName,
                           });
+                          setLoadingStatus((prev) => ({
+                            ...prev,
+                            [`delete-${instance.instanceName}`]: false,
+                          }));
                           if (result.success) {
-                            toast.success(result.success);
+                            toast.success(
+                              `Instância ${instance.instanceName} deletada.`,
+                            );
                             setInstances((prev) =>
                               prev.filter(
                                 (inst) =>
@@ -502,15 +558,19 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                             );
                           } else {
                             toast.error(
-                              result.error || "Erro ao deletar instância.",
+                              result.error ||
+                                "Erro ao deletar instância. Tente novamente.",
                             );
                           }
                         }}
-                        title="Deletar"
+                        isLoading={
+                          loadingStatus[`delete-${instance.instanceName}`]
+                        }
                         variant="destructive"
+                        tooltip="Deletar"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </ActionButton>
+                      </TooltipActionButton>
                     </div>
                   </CardContent>
                 </Card>
@@ -520,89 +580,70 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
         </AnimatePresence>
       </div>
 
-      {/* Modal do QR Code */}
-      <AnimatePresence>
-        {isQrModalOpen && (
+      {/* Modal de QR Code */}
+      {isQrModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-            onClick={handleCloseQrModal}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-card rounded-lg p-6 shadow-xl"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="text-center">
-                    Conectar Instância
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {loadingQrCode ? (
-                    <div className="flex flex-col items-center gap-4 py-8">
-                      <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
-                      <p className="text-muted-foreground">
-                        Carregando QR Code...
-                      </p>
-                    </div>
-                  ) : currentQrCodeData?.base64 ? (
-                    <div className="space-y-4 text-center">
-                      <div className="mx-auto w-fit rounded-lg bg-white p-4 shadow-sm">
-                        <Image
-                          src={currentQrCodeData.base64}
-                          alt="QR Code"
-                          width={256}
-                          height={256}
-                          className="h-64 w-64 object-contain"
-                        />
-                      </div>
-                      <p className="text-muted-foreground">
-                        Escaneie com o WhatsApp no seu celular
-                      </p>
-                    </div>
-                  ) : currentQrCodeData?.pairingCode ? (
-                    <div className="space-y-4 text-center">
-                      <h3 className="font-semibold">Código de Pareamento</h3>
-                      <div className="bg-muted rounded-lg p-4">
-                        <p className="font-mono text-2xl font-bold tracking-wider">
-                          {currentQrCodeData.pairingCode}
-                        </p>
-                      </div>
-                      <p className="text-muted-foreground">
-                        Use este código para conectar seu celular
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <p className="text-destructive">
-                        Não foi possível carregar o QR Code ou código de
-                        pareamento.
-                      </p>
-                    </div>
-                  )}
-
-                  <Button onClick={handleCloseQrModal} className="w-full">
-                    Fechar
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+            <h2 className="mb-4 text-center text-xl font-semibold">
+              Conectar Instância
+            </h2>
+            {loadingQrCode ? (
+              <div className="flex flex-col items-center justify-center py-8">
+                <Loader2 className="text-primary h-12 w-12 animate-spin" />
+                <p className="text-muted-foreground mt-4 text-sm">
+                  Gerando QR Code...
+                </p>
+              </div>
+            ) : currentQrCodeData?.base64 ? (
+              <div className="flex flex-col items-center">
+                <Image
+                  src={`data:image/png;base64,${currentQrCodeData.base64}`}
+                  alt="QR Code"
+                  width={256}
+                  height={256}
+                  className="rounded-md border p-2"
+                />
+                {currentQrCodeData.pairingCode && (
+                  <div className="mt-4 text-center">
+                    <p className="text-muted-foreground text-sm">
+                      Ou use o código de pareamento:
+                    </p>
+                    <p className="text-primary font-mono text-lg font-bold">
+                      {currentQrCodeData.pairingCode}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-center text-red-500">
+                Não foi possível carregar o QR Code.
+              </p>
+            )}
+            <Button onClick={handleCloseQrModal} className="mt-6 w-full">
+              Fechar
+            </Button>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
-      {/* Modal de Configurações */}
+      {/* Modal de Configurações da Instância */}
       <InstanceSettingsModal
-        instanceName={settingsModal.instanceName}
         isOpen={settingsModal.isOpen}
         onClose={handleCloseSettings}
+        instanceName={settingsModal.instanceName}
+      />
+
+      {/* Novo Modal de Proxy da Instância */}
+      <InstanceProxyModal
+        isOpen={proxyModal.isOpen}
+        onClose={handleCloseProxyModal}
+        instanceName={proxyModal.instanceName}
+        onProxySetSuccess={handleProxySetSuccess}
       />
     </div>
   );

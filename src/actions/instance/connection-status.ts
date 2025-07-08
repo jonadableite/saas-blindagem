@@ -89,7 +89,7 @@ export async function getInstanceStatus(input: GetInstanceStatusInput) {
         .update(instancesTables)
         .set({ status: "unknown", updatedAt: new Date() })
         .where(eq(instancesTables.instanceId, instance.instanceId));
-      revalidatePath("/whatsapp");
+      revalidatePath("/whatsapp/instancia");
 
       return {
         error: errorData.message || "Erro ao buscar status da instância.",

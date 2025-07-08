@@ -2,13 +2,6 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
 import { Crown, LayoutDashboard, Sparkles, Users } from "lucide-react";
-// Importe os ícones Lucide necessários para os logos das organizações
-import {
-  AudioWaveform,
-  Command,
-  GalleryVerticalEnd,
-  LucideIcon,
-} from "lucide-react"; // Import LucideIcon type
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -17,7 +10,6 @@ import { FaWhatsapp } from "react-icons/fa";
 import Logo from "@/components/logo";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -30,31 +22,6 @@ import {
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-
-// Define um mapeamento de nomes de ícones (strings) para os componentes Lucide Icon reais
-// NOTA: Este mapa não é diretamente usado para logos de organização do better-auth,
-// pois o better-auth fornece o logo como uma string de URL. Se você pretende mapear
-// uma string de metadados da organização para um LucideIcon, você precisaria implementar essa lógica.
-const lucideIconMap: { [key: string]: LucideIcon } = {
-  AudioWaveform,
-  Command,
-  GalleryVerticalEnd,
-  // Adicione outros ícones conforme necessário para as organizações
-};
-
-// Define a interface para a equipe/organização para tipagem consistente
-// Ajustado 'logo' para ser string (URL) conforme a estrutura da organização do better-auth
-// Adicionado 'slug' pois faz parte do objeto de organização do better-auth
-interface OrganizationTeam {
-  id: string;
-  name: string;
-  slug: string; // Adicionado slug
-  logo?: string; // Alterado para string para URL
-  // NOTA: 'plan' não é diretamente fornecido pelo objeto de organização do better-auth.
-  // Isso pode precisar ser buscado separadamente ou derivado com base na assinatura do usuário
-  // para a organização específica. Por enquanto, usaremos o plano global do usuário ou um placeholder.
-  plan: string;
-}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
@@ -70,43 +37,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     setIsMounted(true);
   }, []);
 
-  // Buscar as organizações das quais o usuário é membro
-  const { data: organizations, isLoading: loadingOrganizations } =
-    authClient.useListOrganizations();
-
-  // Buscar a organização atualmente ativa
-  const { data: activeOrganization, isLoading: loadingActiveOrganization } =
-    authClient.useActiveOrganization();
-
-  // Estado para armazenar a organização ativa atual para o TeamSwitcher
-  const [currentActiveOrganization, setCurrentActiveOrganization] =
-    React.useState<OrganizationTeam | null>(null);
-
-  // Efeito para definir a organização ativa inicial e o plano exibido assim que os dados são carregados
   React.useEffect(() => {
-    if (isMounted && activeOrganization && !loadingActiveOrganization) {
-      // Mapear a activeOrganization para o formato OrganizationTeam, incluindo um placeholder para 'plan'
-      const activeOrgMapped: OrganizationTeam = {
-        id: activeOrganization.id,
-        name: activeOrganization.name,
-        slug: activeOrganization.slug,
-        logo: activeOrganization.logo,
-        // Usando o plano global do usuário como um placeholder para o plano da organização.
-        // Isso pode precisar de refinamento se os planos forem verdadeiramente específicos da organização.
-        plan: session.data?.user?.plan || "Free",
-      };
-      setCurrentActiveOrganization(activeOrgMapped);
-      setDisplayedPlan(activeOrgMapped.plan);
-    } else if (isMounted && !activeOrganization && !loadingActiveOrganization) {
-      // Se nenhuma organização ativa for definida, use o plano do usuário como padrão
-      setDisplayedPlan(session.data?.user?.plan || "Free");
+    if (isMounted) {
+      setDisplayedPlan(session.data?.user?.plan || "");
     }
-  }, [
-    isMounted,
-    activeOrganization,
-    loadingActiveOrganization,
-    session.data?.user?.plan,
-  ]);
+  }, [session.data?.user?.plan, isMounted]);
 
   console.log("Sidebar isCollapsed:", isCollapsed);
 
@@ -120,38 +55,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     });
   };
 
-  // Mapear as organizações buscadas para a interface OrganizationTeam
-  const fetchedOrganizations: OrganizationTeam[] = React.useMemo(() => {
-    if (!organizations) return [];
-    return organizations.map((org) => ({
-      id: org.id,
-      name: org.name,
-      slug: org.slug,
-      logo: org.logo, // Isso será uma string de URL
-      // Atribuindo o plano global do usuário. Isso pode precisar de lógica personalizada
-      // se cada organização tiver um plano distinto associado ao usuário.
-      plan: session.data?.user?.plan || "Free",
-    }));
-  }, [organizations, session.data?.user?.plan]);
-
-  // Manipulador para quando a organização ativa muda no TeamSwitcher
-  const handleOrganizationChange = async (newOrg: OrganizationTeam) => {
-    setCurrentActiveOrganization(newOrg);
-    setDisplayedPlan(newOrg.plan); // Atualizar o plano exibido com base no plano (placeholder) da organização selecionada
-
-    // Atualizar a organização ativa na sessão do usuário via better-auth
-    try {
-      await authClient.organization.setActive({
-        organizationId: newOrg.id,
-      });
-      console.log("Organização ativa alterada para:", newOrg.name);
-      // Opcionalmente, atualize a sessão ou os dados, se necessário, após definir a organização ativa
-      // authClient.invalidateSession(); // Isso pode causar uma re-renderização completa, use com cautela.
-    } catch (error) {
-      console.error("Falha ao definir a organização ativa:", error);
-    }
-  };
-
+  // Verifica se o usuário logado possui a role de 'admin'
   const userRoles = session.data?.user?.role || "";
   const isSuperAdmin = userRoles.split(",").includes("superadmin");
 
@@ -273,33 +177,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {/* Nova seção para seleção de organização */}
-        <SidebarGroup className="mt-4">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            <SidebarGroupLabel className="text-muted-foreground/80 text-sm font-semibold">
-              Organizações
-            </SidebarGroupLabel>
-          </motion.div>
-          {loadingOrganizations || loadingActiveOrganization ? ( // Verifica ambos os estados de carregamento
-            // Exibir um estado de carregamento enquanto as organizações são buscadas
-            <div className="text-muted-foreground p-2 text-sm">
-              Carregando organizações...
-            </div>
-          ) : (
-            <TeamSwitcher
-              teams={fetchedOrganizations}
-              initialActiveTeam={currentActiveOrganization}
-              onTeamChange={handleOrganizationChange}
-            />
-          )}
-        </SidebarGroup>
-
         <NavMain items={navMain} />
-
         {/* Novo SidebarGroup para "Outros" e os botões de Upgrade e Super Admin */}
         <SidebarGroup className="mt-8">
           <motion.div

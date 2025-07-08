@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@/components/ui/switch"; // Certifique-se de importar Switch
 import { CreateInstanceSchema, Instance } from "@/db/schema";
 
 import { InstanceList } from "./instance-list";
@@ -198,30 +198,32 @@ export function WhatsappClientPage({
                   placeholder="Minha Instância de Vendas"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="webhookUrl" className="text-right">
-                  Webhook URL
-                </Label>
-                <Input
-                  id="webhookUrl"
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                  className="bg-input text-foreground col-span-3"
-                  placeholder="https://seuservidor.com/webhook"
-                  disabled={!webhookEnabled}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="webhookEnabled" className="text-right">
+              {/* Webhook Fields */}
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="webhookEnabled" className="flex-1">
                   Ativar Webhook
                 </Label>
                 <Switch
                   id="webhookEnabled"
                   checked={webhookEnabled}
                   onCheckedChange={setWebhookEnabled}
-                  className="col-span-3"
                 />
               </div>
+              {webhookEnabled && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="webhookUrl" className="text-right">
+                    URL Webhook
+                  </Label>
+                  <Input
+                    id="webhookUrl"
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                    className="col-span-3"
+                    placeholder="https://sua-api.com/webhook"
+                    type="url"
+                  />
+                </div>
+              )}
             </div>
             <Button
               onClick={handleCreateInstance}
@@ -253,7 +255,7 @@ export function WhatsappClientPage({
             <span
               className={`text-sm font-semibold ${instancesPercentage > 80 ? "text-red-500" : ""}`}
             >
-              ({instancesPercentage.toFixed(0)}%)
+              ({instancesPercentage.toFixed(2)}%)
             </span>
           )}
         </div>

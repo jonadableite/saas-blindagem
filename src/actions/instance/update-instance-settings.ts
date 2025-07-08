@@ -32,7 +32,9 @@ const InstanceSettingsSchema = z.object({
 
 type UpdateInstanceSettingsInput = z.infer<typeof InstanceSettingsSchema>;
 
-export async function updateInstanceSettings(input: UpdateInstanceSettingsInput) {
+export async function updateInstanceSettings(
+  input: UpdateInstanceSettingsInput,
+) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -107,7 +109,8 @@ export async function updateInstanceSettings(input: UpdateInstanceSettingsInput)
       );
 
       return {
-        error: errorData.message || "Erro ao atualizar configurações da instância.",
+        error:
+          errorData.message || "Erro ao atualizar configurações da instância.",
       };
     }
 
@@ -117,7 +120,7 @@ export async function updateInstanceSettings(input: UpdateInstanceSettingsInput)
       responseData,
     );
 
-    revalidatePath("/whatsapp");
+    revalidatePath("/whatsapp/instancia");
 
     return {
       success: `Configurações da instância ${instanceName} atualizadas com sucesso.`,
@@ -127,6 +130,8 @@ export async function updateInstanceSettings(input: UpdateInstanceSettingsInput)
       `[updateInstanceSettings] Erro inesperado ao atualizar configurações da instância ${instanceName}:`,
       error,
     );
-    return { error: "Ocorreu um erro inesperado ao atualizar as configurações." };
+    return {
+      error: "Ocorreu um erro inesperado ao atualizar as configurações.",
+    };
   }
 }

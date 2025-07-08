@@ -86,7 +86,7 @@ export async function setInstancePresence(input: SetPresenceInput) {
         error: errorData.message || "Erro ao definir presença da instância.",
       };
     }
-    revalidatePath("/whatsapp");
+    revalidatePath("/whatsapp/instancia");
 
     return {
       success: `Presença da instância ${instanceName} definida para ${presence}.`,

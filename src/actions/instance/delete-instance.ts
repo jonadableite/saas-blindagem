@@ -90,7 +90,7 @@ export async function deleteInstance(input: DeleteInstanceInput) {
       .delete(instancesTables)
       .where(eq(instancesTables.instanceId, instance.instanceId));
 
-    revalidatePath("/whatsapp");
+    revalidatePath("/whatsapp/instancia");
 
     return { success: `Instância ${instanceName} deletada com sucesso.` };
   } catch (error) {

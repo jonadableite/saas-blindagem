@@ -90,7 +90,7 @@ export async function restartInstance(input: RestartInstanceInput) {
       .set({ status: "restarting", updatedAt: new Date() })
       .where(eq(instancesTables.instanceId, instance.instanceId));
 
-    revalidatePath("/whatsapp");
+    revalidatePath("/whatsapp/instancia");
 
     return { success: `Instância ${instanceName} reiniciada com sucesso.` };
   } catch (error) {

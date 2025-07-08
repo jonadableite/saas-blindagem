@@ -107,7 +107,7 @@ export async function createInstance(input: CreateInstanceInput) {
     });
 
     // Revalidar o cache da página para mostrar a nova instância
-    revalidatePath("/whatsapp");
+    revalidatePath("/whatsapp/instancia");
 
     return {
       success: "Instância criada com sucesso!",

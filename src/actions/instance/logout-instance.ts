@@ -90,7 +90,7 @@ export async function logoutInstance(input: LogoutInstanceInput) {
       .set({ status: "disconnected", updatedAt: new Date() })
       .where(eq(instancesTables.instanceId, instance.instanceId));
 
-    revalidatePath("/whatsapp");
+    revalidatePath("/whatsapp/instancia");
 
     return {
       success: `Logout da instância ${instanceName} realizado com sucesso.`,
