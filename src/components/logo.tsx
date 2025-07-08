@@ -1,18 +1,17 @@
-/* eslint-disable @next/next/no-img-element */
 // src/components/logo.tsx
+import Link from "next/link";
+
 type LogoProps = {
   variant?: "default" | "icon" | "login";
-  className?: string; // Adicione a prop className
+  className?: string;
 };
 
 const Logo = ({ variant = "default", className }: LogoProps) => {
   return (
-    <a href="/" className="flex items-center gap-2">
+    <Link href="/" className="flex items-center gap-2">
       {" "}
       {variant === "login" && (
-        // eslint-disable-next-line react/jsx-no-comment-textnodes
         <div className="flex items-center">
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src="/favicon.svg"
             alt="WhatLead icon"
@@ -36,10 +35,9 @@ const Logo = ({ variant = "default", className }: LogoProps) => {
         </div>
       )}
       {variant === "icon" && (
-        // Remova width e height fixos e aplique className
         <img src="/favicon.svg" alt="WhatLead logo" className={className} />
       )}
-    </a>
+    </Link>
   );
 };
 
