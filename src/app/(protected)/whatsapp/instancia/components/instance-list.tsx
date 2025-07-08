@@ -5,8 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity, // Para StatusBadge
   AlertCircle, // Para StatusBadge
-  Globe, // Para o botão de Proxy
-  Loader2,
+  Globe,
   LogOut,
   MessageCircle,
   QrCode,
@@ -15,7 +14,7 @@ import {
   Settings,
   Trash2,
   Wifi, // Para StatusBadge
-  WifiOff, // Para StatusBadge
+  WifiOff,
 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -580,56 +579,83 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
         </AnimatePresence>
       </div>
 
-      {/* Modal de QR Code */}
-      {isQrModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      {/* Modal do QR Code */}
+      <AnimatePresence>
+        {isQrModalOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-card rounded-lg p-6 shadow-xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+            onClick={handleCloseQrModal}
           >
-            <h2 className="mb-4 text-center text-xl font-semibold">
-              Conectar Instância
-            </h2>
-            {loadingQrCode ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <Loader2 className="text-primary h-12 w-12 animate-spin" />
-                <p className="text-muted-foreground mt-4 text-sm">
-                  Gerando QR Code...
-                </p>
-              </div>
-            ) : currentQrCodeData?.base64 ? (
-              <div className="flex flex-col items-center">
-                <Image
-                  src={`data:image/png;base64,${currentQrCodeData.base64}`}
-                  alt="QR Code"
-                  width={256}
-                  height={256}
-                  className="rounded-md border p-2"
-                />
-                {currentQrCodeData.pairingCode && (
-                  <div className="mt-4 text-center">
-                    <p className="text-muted-foreground text-sm">
-                      Ou use o código de pareamento:
-                    </p>
-                    <p className="text-primary font-mono text-lg font-bold">
-                      {currentQrCodeData.pairingCode}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-center text-red-500">
-                Não foi possível carregar o QR Code.
-              </p>
-            )}
-            <Button onClick={handleCloseQrModal} className="mt-6 w-full">
-              Fechar
-            </Button>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle className="text-center">
+                    Conectar Instância
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {loadingQrCode ? (
+                    <div className="flex flex-col items-center gap-4 py-8">
+                      <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
+                      <p className="text-muted-foreground">
+                        Carregando QR Code...
+                      </p>
+                    </div>
+                  ) : currentQrCodeData?.base64 ? (
+                    <div className="space-y-4 text-center">
+                      <div className="mx-auto w-fit rounded-lg bg-white p-4 shadow-sm">
+                        <Image
+                          src={currentQrCodeData.base64}
+                          alt="QR Code"
+                          width={256}
+                          height={256}
+                          className="h-64 w-64 object-contain"
+                        />
+                      </div>
+                      <p className="text-muted-foreground">
+                        Escaneie com o WhatsApp no seu celular
+                      </p>
+                    </div>
+                  ) : currentQrCodeData?.pairingCode ? (
+                    <div className="space-y-4 text-center">
+                      <h3 className="font-semibold">Código de Pareamento</h3>
+                      <div className="bg-muted rounded-lg p-4">
+                        <p className="font-mono text-2xl font-bold tracking-wider">
+                          {currentQrCodeData.pairingCode}
+                        </p>
+                      </div>
+                      <p className="text-muted-foreground">
+                        Use este código para conectar seu celular
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <p className="text-destructive">
+                        Não foi possível carregar o QR Code ou código de
+                        pareamento.
+                      </p>
+                    </div>
+                  )}
+
+                  <Button onClick={handleCloseQrModal} className="w-full">
+                    Fechar
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Modal de Configurações da Instância */}
       <InstanceSettingsModal
