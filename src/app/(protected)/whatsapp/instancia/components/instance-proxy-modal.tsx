@@ -100,12 +100,12 @@ export function InstanceProxyModal({
   const form = useForm({
     resolver: zodResolver(ProxySchema),
     defaultValues: {
-      enabled: false,
-      host: "",
-      port: "",
-      protocol: "https",
-      username: "",
-      password: "",
+      enabled: true, // Definido como true para que os campos preenchidos sejam visíveis
+      host: "proxy.proxyads.com",
+      port: "", // Porta permanece vazia para preenchimento do usuário
+      protocol: "socks5", // Protocolo SOCKS5
+      username: "6np_hermesoc5ot",
+      password: "8ykf3axzkkw*oe3e8v",
     },
   });
 
@@ -129,35 +129,44 @@ export function InstanceProxyModal({
               username: proxyData.username || "",
               password: proxyData.password || "",
             });
-          } else if (result.error) {
-            toast.error(`Erro ao carregar proxy: ${result.error}`);
+          } else {
+            // Se não encontrar proxy ou houver erro, use os valores padrão
+            toast.info(result.error || "Nenhuma configuração de proxy encontrada. Usando valores padrão.");
             reset({
-              enabled: false,
-              host: "",
+              enabled: true,
+              host: "proxy.proxyads.com",
               port: "",
-              protocol: "https",
-              username: "",
-              password: "",
-            }); // Reset to default if error
+              protocol: "socks5",
+              username: "6np_hermesoc5ot",
+              password: "8ykf3axzkkw*oe3e8v",
+            });
           }
         })
         .catch((error) => {
           console.error("Failed to fetch proxy settings:", error);
-          toast.error("Erro ao carregar configurações de proxy.");
+          toast.error("Erro ao carregar configurações de proxy. Usando valores padrão.");
           reset({
-            enabled: false,
-            host: "",
+            enabled: true,
+            host: "proxy.proxyads.com",
             port: "",
-            protocol: "http",
-            username: "",
-            password: "",
-          }); // Reset to default if error
+            protocol: "socks5",
+            username: "6np_hermesoc5ot",
+            password: "8ykf3axzkkw*oe3e8v",
+          });
         })
         .finally(() => {
           setIsLoadingProxy(false);
         });
     } else {
-      reset(); // Reset form when modal closes
+      // Quando o modal fecha, reset para os valores padrão
+      reset({
+        enabled: true,
+        host: "proxy.proxyads.com",
+        port: "",
+        protocol: "socks5",
+        username: "6np_hermesoc5ot",
+        password: "8ykf3axzkkw*oe3e8v",
+      });
     }
   }, [isOpen, instanceName, reset]);
 
@@ -166,19 +175,14 @@ export function InstanceProxyModal({
     try {
       const proxyDetailsToSend: ProxyDetails = {
         enabled: values.enabled,
-        host: values.enabled ? values.host || "" : "",
-        port: values.enabled ? values.port || "" : "",
-        protocol: values.enabled ? values.protocol || "https" : "https",
-        username: values.enabled ? values.username : "",
-        password: values.enabled ? values.password : "",
       };
 
-      if (!values.enabled) {
-        proxyDetailsToSend.host = "";
-        proxyDetailsToSend.port = "";
-        proxyDetailsToSend.protocol = "https";
-        proxyDetailsToSend.username = "";
-        proxyDetailsToSend.password = "";
+      if (values.enabled) {
+        proxyDetailsToSend.host = values.host || undefined;
+        proxyDetailsToSend.port = values.port || undefined;
+        proxyDetailsToSend.protocol = values.protocol || undefined;
+        proxyDetailsToSend.username = values.username || undefined;
+        proxyDetailsToSend.password = values.password || undefined;
       }
 
       const result = await setInstanceProxy({
