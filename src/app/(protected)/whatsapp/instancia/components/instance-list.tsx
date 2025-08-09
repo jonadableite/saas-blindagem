@@ -6,6 +6,7 @@ import {
   Activity,
   AlertCircle,
   Globe,
+  Link,
   Loader2,
   LogOut,
   MessageCircle,
@@ -17,7 +18,6 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
-import Image from "next/image";
 import {
   lazy,
   memo,
@@ -34,7 +34,6 @@ import { toast } from "sonner";
 import {
   deleteInstance,
   fetchInstanceDetails,
-  getInstanceQrCode,
   logoutInstance,
   restartInstance,
 } from "@/actions/instance";
@@ -46,6 +45,8 @@ import { Input } from "@/components/ui/input";
 import { instancesTables } from "@/db/schema";
 import { cn } from "@/lib/utils";
 
+import { useQrCodeModal } from "./hooks/useQrCodeModal";
+import { QrCodeModal } from "./qr-code-modal";
 import { TooltipActionButton } from "./tooltip-action-button";
 
 // Hook de debounce para otimizar a busca
@@ -191,11 +192,16 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300); // Debounce para a busca
   const [loadingState, dispatchLoading] = useReducer(loadingReducer, {});
-  const [qrModal, setQrModal] = useState<{
-    open: boolean;
-    data?: { base64?: string; pairingCode?: string };
-    instanceName: string | null;
-  }>({ open: false, instanceName: null });
+
+  // Hook personalizado para QR Code
+  const {
+    qrModal,
+    isLoadingQrCode,
+    qrCodeAttempt,
+    fetchQrCodeWithRetry,
+    closeQrModal,
+  } = useQrCodeModal();
+
   const [settingsModal, setSettingsModal] = useState<{
     open: boolean;
     instanceName: string;
@@ -392,48 +398,6 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
   }, [hasMoreInstances, isLoadingMore, loadMoreInstances]);
 
   // Handlers para os modais e ações
-  const isQrModalOpen = qrModal.open;
-  const currentQrCodeData = qrModal.data;
-  const loadingQrCode = loadingState[`qrcode-${qrModal.instanceName}`];
-
-  const handleGetQrCode = useCallback(async (instanceName: string) => {
-    setQrModal({ open: true, instanceName, data: undefined }); // Abre modal e limpa dados anteriores
-    dispatchLoading({
-      type: "set",
-      key: `qrcode-${instanceName}`,
-      value: true,
-    });
-    const result = await getInstanceQrCode({ instanceName });
-    dispatchLoading({
-      type: "set",
-      key: `qrcode-${instanceName}`,
-      value: false,
-    });
-
-    // Type guard for QR Code response
-    if ("success" in result && result.success) {
-      // A propriedade com a imagem é 'qrCode', não 'base64'.
-      if (result.qrCode || result.pairingCode) {
-        setQrModal((prev) => ({
-          ...prev,
-          data: { base64: result.qrCode, pairingCode: result.pairingCode },
-        }));
-      } else {
-        // Caso de sucesso, mas sem dados de QR Code.
-        toast.error(
-          `Não foram encontrados QR Code ou Código de Pareamento para ${instanceName}`,
-        );
-        setQrModal({ open: false, instanceName: null });
-      }
-    } else if ("error" in result) {
-      toast.error(result.error || `Erro ao obter QR Code para ${instanceName}`);
-      setQrModal({ open: false, instanceName: null }); // Fecha se houver erro
-    }
-  }, []);
-
-  const handleCloseQrModal = useCallback(() => {
-    setQrModal({ open: false, instanceName: null });
-  }, []);
 
   const handleOpenSettings = useCallback((instanceName: string) => {
     setSettingsModal({ open: true, instanceName });
@@ -501,18 +465,47 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
+                    {/* Botão QR Code quando status é qrcode */}
                     {instance.status === "qrcode" && (
                       <TooltipActionButton
-                        onClick={() => handleGetQrCode(instance.instanceName)}
+                        onClick={() =>
+                          fetchQrCodeWithRetry(instance.instanceName)
+                        }
                         isLoading={
-                          loadingState[`qrcode-${instance.instanceName}`]
+                          isLoadingQrCode &&
+                          qrModal.instanceName === instance.instanceName
                         }
                         tooltip="Ver QR Code"
                       >
                         <QrCode className="h-4 w-4" />
                       </TooltipActionButton>
                     )}
-                    {instance.status === "open" && (
+
+                    {/* Botão Conectar quando instância não está online */}
+                    {[
+                      "close",
+                      "offline",
+                      "unknown",
+                      "connecting",
+                      "start",
+                    ].includes(instance.status || "") && (
+                      <TooltipActionButton
+                        onClick={() =>
+                          fetchQrCodeWithRetry(instance.instanceName)
+                        }
+                        isLoading={
+                          isLoadingQrCode &&
+                          qrModal.instanceName === instance.instanceName
+                        }
+                        tooltip="Conectar Instância"
+                        className="border-green-600 bg-green-600 text-white hover:bg-green-700 dark:border-green-600 dark:bg-green-600 dark:hover:bg-green-700"
+                      >
+                        <Link className="h-4 w-4" />
+                      </TooltipActionButton>
+                    )}
+
+                    {/* Botão Logout quando status é open/online */}
+                    {["open", "online"].includes(instance.status || "") && (
                       <TooltipActionButton
                         onClick={async () => {
                           dispatchLoading({
@@ -689,81 +682,15 @@ export function InstanceList({ initialInstances }: InstanceListProps) {
       </div>
 
       {/* Modal do QR Code */}
-      <AnimatePresence>
-        {isQrModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-            onClick={handleCloseQrModal}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="text-center">
-                    Conectar Instância
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {loadingQrCode ? (
-                    <div className="flex flex-col items-center gap-4 py-8">
-                      <Loader2 className="text-primary h-8 w-8 animate-spin" />
-                      <p className="text-muted-foreground">
-                        Carregando QR Code...
-                      </p>
-                    </div>
-                  ) : currentQrCodeData?.base64 ? (
-                    <div className="space-y-4 text-center">
-                      <div className="mx-auto w-fit rounded-lg bg-white p-4 shadow-sm">
-                        <Image
-                          src={currentQrCodeData.base64}
-                          alt="QR Code"
-                          width={256}
-                          height={256}
-                          className="h-64 w-64 object-contain"
-                        />
-                      </div>
-                      <p className="text-muted-foreground">
-                        Escaneie com o WhatsApp no seu celular
-                      </p>
-                    </div>
-                  ) : currentQrCodeData?.pairingCode ? (
-                    <div className="space-y-4 text-center">
-                      <h3 className="font-semibold">Código de Pareamento</h3>
-                      <div className="bg-muted rounded-lg p-4">
-                        <p className="font-mono text-2xl font-bold tracking-wider">
-                          {currentQrCodeData.pairingCode}
-                        </p>
-                      </div>
-                      <p className="text-muted-foreground">
-                        Use este código para conectar seu celular
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <p className="text-destructive">
-                        Não foi possível carregar o QR Code ou código de
-                        pareamento.
-                      </p>
-                    </div>
-                  )}
-                  <Button onClick={handleCloseQrModal} className="w-full">
-                    Fechar
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <QrCodeModal
+        qrModal={qrModal}
+        isLoading={isLoadingQrCode}
+        currentAttempt={qrCodeAttempt}
+        onClose={closeQrModal}
+        onRetry={() =>
+          qrModal.instanceName && fetchQrCodeWithRetry(qrModal.instanceName)
+        }
+      />
 
       {/* Modal de Configurações da Instância */}
       <Suspense fallback={null}>
