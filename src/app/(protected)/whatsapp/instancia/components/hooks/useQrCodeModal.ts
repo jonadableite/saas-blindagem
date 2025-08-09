@@ -1,6 +1,7 @@
 // src/app/(protected)/whatsapp/instancia/components/hooks/useQrCodeModal.ts
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
+
 import { getInstanceQrCode } from "@/actions/instance";
 
 interface QrCodeData {
