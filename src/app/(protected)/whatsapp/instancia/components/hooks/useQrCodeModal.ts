@@ -2,7 +2,7 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import { getInstanceQrCode } from "@/actions/instance";
+import { getInstanceQrCode, restartInstance } from "@/actions/instance";
 
 interface QrCodeData {
   base64?: string;
@@ -28,7 +28,8 @@ export function useQrCodeModal() {
     setIsLoadingQrCode(true);
 
     const maxRetries = 10;
-    const retryDelay = 2000;
+    const retryDelay = 3000; // Aumentei para 3 segundos
+    let hasTriedRestart = false;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       setQrCodeAttempt(attempt);
@@ -48,6 +49,36 @@ export function useQrCodeModal() {
           }
         }
 
+        // Se a instância não está pronta e ainda não tentamos reiniciar
+        if (
+          "error" in result &&
+          result.error?.includes("ainda não está pronta") &&
+          !hasTriedRestart &&
+          attempt <= 3
+        ) {
+          console.log(
+            `[useQrCodeModal] Tentando reiniciar instância ${instanceName}...`,
+          );
+
+          try {
+            const restartResult = await restartInstance({ instanceName });
+            if ("success" in restartResult && restartResult.success) {
+              hasTriedRestart = true;
+              console.log(
+                `[useQrCodeModal] Instância ${instanceName} reiniciada com sucesso`,
+              );
+              // Aguarda mais tempo após reiniciar
+              await new Promise((resolve) => setTimeout(resolve, 5000));
+              continue;
+            }
+          } catch (restartError) {
+            console.error(
+              `[useQrCodeModal] Erro ao reiniciar instância:`,
+              restartError,
+            );
+          }
+        }
+
         if (attempt < maxRetries) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
         }
@@ -62,7 +93,7 @@ export function useQrCodeModal() {
     setIsLoadingQrCode(false);
     setQrCodeAttempt(0);
     toast.error(
-      `Não foi possível carregar o QR Code para ${instanceName}. A instância pode ainda estar inicializando. Tente novamente em alguns instantes.`,
+      `Não foi possível carregar o QR Code para ${instanceName}. Tente reiniciar a instância manualmente ou aguarde alguns minutos.`,
     );
     setQrModal({ open: false, instanceName: null });
   }, []);

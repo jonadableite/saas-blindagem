@@ -90,7 +90,25 @@ export async function getInstanceQrCode(input: InstanceConnectInput) {
       qrCodeData,
     );
 
-    if (!qrCodeData || (!qrCodeData.code && !qrCodeData.pairingCode)) {
+    // Verifica se a API retornou apenas count (instância não está pronta)
+    if (
+      qrCodeData &&
+      typeof qrCodeData.count === "number" &&
+      qrCodeData.count === 0
+    ) {
+      console.log(
+        `[getInstanceQrCode] Instância ${instanceName} ainda não está pronta para gerar QR Code (count: ${qrCodeData.count})`,
+      );
+      return {
+        error: "Instância ainda não está pronta. Aguarde alguns segundos...",
+      };
+    }
+
+    // Verifica se temos os dados necessários do QR Code
+    if (
+      !qrCodeData ||
+      (!qrCodeData.code && !qrCodeData.base64 && !qrCodeData.pairingCode)
+    ) {
       console.error(
         "[getInstanceQrCode] Resposta da API em formato inesperado:",
         qrCodeData,

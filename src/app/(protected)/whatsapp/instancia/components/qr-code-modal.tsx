@@ -61,11 +61,18 @@ export function QrCodeModal({
                   <div className="flex flex-col items-center gap-4 py-8">
                     <Loader2 className="text-primary h-8 w-8 animate-spin" />
                     <p className="text-muted-foreground">
-                      Aguardando instância inicializar...
+                      {currentAttempt <= 3
+                        ? "Inicializando instância..."
+                        : "Aguardando QR Code..."}
                     </p>
                     {currentAttempt > 0 && (
                       <p className="text-muted-foreground text-sm">
                         Tentativa {currentAttempt} de 10
+                      </p>
+                    )}
+                    {currentAttempt <= 3 && (
+                      <p className="text-muted-foreground text-xs">
+                        Reiniciando instância se necessário...
                       </p>
                     )}
                   </div>
