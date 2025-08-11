@@ -74,6 +74,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Instâncias",
           url: "/whatsapp/instancia",
         },
+        {
+          title: "Aquecimento",
+          url: "/whatsapp/aquecimento",
+        },
       ],
     },
   ];
